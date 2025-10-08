@@ -27,7 +27,7 @@ Expo is the environment in which we'll be developing our application. If React N
 - [ ] [Get Started - Start developing](https://docs.expo.dev/get-started/start-developing/) (skimming other pages in this section recommended)
 - [ ] [Develop - Development Builds - Introduction](https://docs.expo.dev/develop/development-builds/introduction/)
 - [ ] [User Interface - Safe areas](https://docs.expo.dev/develop/user-interface/safe-areas/) (also skim the other pages in this section)
-###💨&nbsp;Nativewind Docs
+### 💨&nbsp;Nativewind Docs
 `nativewind` is the library we'll be using to style our React Components. It's pretty good to be familiar with it, but it's mostly just new syntax, so (please) don't go losing sleep over it.
 - [ ] [Getting Started - Overview](https://www.nativewind.dev/docs)
 - [ ] [Core Concepts - *all*](https://www.nativewind.dev/docs/core-concepts/tailwindcss)
