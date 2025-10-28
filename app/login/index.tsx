@@ -1,5 +1,7 @@
 import LoginScreen from '../../screens/login/LoginScreen';
 
-export default function LoginRoute() {
+const LoginRoute = () => {
   return <LoginScreen />;
 }
+
+export default LoginRoute;
