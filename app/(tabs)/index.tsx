@@ -2,11 +2,12 @@ import { StyleSheet } from 'react-native';
 
 import EditScreenInfo from '@/components/EditScreenInfo';
 import { Text, View } from '@/components/Themed';
+import { Link } from 'expo-router';
 
 export default function TabOneScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Gopher Fitness</Text>
+      <Link style={styles.title} href="/storybook">Open Storybook</Link>
       <View
         style={styles.separator}
         lightColor="#eee"
