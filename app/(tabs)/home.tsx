@@ -1,3 +1,5 @@
 import Home from "@/screens/Home";
 
-export const HomeScreen = () => <Home/>;
+const HomeScreen = () => <Home/>;
+
+export default HomeScreen;

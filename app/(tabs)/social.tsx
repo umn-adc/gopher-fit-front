@@ -1,3 +1,5 @@
 import Social from "@/screens/Social";
 
-export const SocialScreen = () => <Social/>
+const SocialScreen = () => <Social/>
+
+export default SocialScreen;

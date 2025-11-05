@@ -1,3 +1,5 @@
 import Workouts from "@/screens/Workouts";
 
-export const WorkoutsScreen = () => <Workouts/>
+const WorkoutsScreen = () => <Workouts/>
+
+export default WorkoutsScreen;
