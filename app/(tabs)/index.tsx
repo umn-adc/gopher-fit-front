@@ -7,7 +7,13 @@ import { Link } from 'expo-router';
 export default function TabOneScreen() {
   return (
     <View style={styles.container}>
-      <Link style={styles.title} href="/storybook">Open Storybook</Link>
+      <Link style={styles.title} href="/storybook">
+        <Text 
+          lightColor='rgba(255,255,255,0)'
+          darkColor='#eee'>
+          Open Storybook
+        </Text>
+      </Link>
       <View
         style={styles.separator}
         lightColor="#eee"
