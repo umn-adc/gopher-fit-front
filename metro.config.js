@@ -13,7 +13,6 @@ if (process.env.STORYBOOK_ENABLED === 'true') {
     try {
         const { withStorybook } = require('@storybook/react-native/metro/withStorybook');
         module.exports = withStorybook(config, { enabled: true });
-        console.log("yo");
     } catch (err) {
         // Fall back to the default config and surface a warning; Metro can continue.
         // Keep the error message minimal to avoid noisy logs during normal runs.
@@ -22,6 +21,5 @@ if (process.env.STORYBOOK_ENABLED === 'true') {
         module.exports = config;
     }
 } else {
-    console.log("YAAAAAAAAAAAAAA")
     module.exports = config;
 }
