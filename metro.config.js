@@ -1,5 +1,4 @@
 // Learn more https://docs.expo.io/guides/customizing-metro
-require('dotenv').config();
 const { getDefaultConfig } = require('expo/metro-config');
 
 /** @type {import('expo/metro-config').MetroConfig} */
@@ -9,7 +8,7 @@ const config = getDefaultConfig(__dirname);
 // Some Storybook packages are published as ESM and will throw when required from
 // CommonJS. Guarding the require prevents Metro from failing to load the config
 // when Storybook isn't in use.
-if (process.env.STORYBOOK_ENABLED === 'true') {
+if (process.env.EXPO_PUBLIC_ENVIRONMENT === 'storybook') {
     try {
         const { withStorybook } = require('@storybook/react-native/metro/withStorybook');
         module.exports = withStorybook(config, { enabled: true });
