@@ -1,3 +1,5 @@
 import Onboarding from "@/screens/Onboarding";
 
-export const Onboard = () => <Onboarding/>;
+const Onboard = () => <Onboarding/>;
+
+export default Onboard;
