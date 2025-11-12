@@ -1,4 +1,4 @@
-import Workouts from "@/screens/Workouts";
+import Workouts from "@screens/Workouts";
 
 const WorkoutsScreen = () => <Workouts/>
 
