@@ -1,4 +1,4 @@
-import Profile from "@/screens/Profile";
+import Profile from "@screens/Profile";
 
 const ProfileScreen = () => <Profile/>
 

@@ -1,4 +1,4 @@
-import Nutrition from "@/screens/Nutrition";
+import Nutrition from "@screens/Nutrition";
 
 const NutritionScreen = () => <Nutrition/>;
 

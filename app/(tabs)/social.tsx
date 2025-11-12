@@ -1,4 +1,4 @@
-import Social from "@/screens/Social";
+import Social from "@screens/Social";
 
 const SocialScreen = () => <Social/>
 
