@@ -26,10 +26,6 @@ export default function TabLayout() {
         // to prevent a hydration error in React Navigation v6.
         headerShown: useClientOnlyValue(false, true),
       }}>
-      <Tabs.Protected guard={process.env.EXPO_PUBLIC_ENVIRONMENT === "storybook"}>
-        <Tabs.Screen name ="storybook"/>
-      </Tabs.Protected>
-      <Tabs.Protected guard={process.env.EXPO_PUBLIC_ENVIRONMENT !== "storybook"}>
         <Tabs.Screen
           name="index"
           options={{
@@ -79,7 +75,6 @@ export default function TabLayout() {
             tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color}/>
           }}
         />
-      </Tabs.Protected>
     </Tabs>
   );
 }
