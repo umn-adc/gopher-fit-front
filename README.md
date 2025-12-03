@@ -11,8 +11,8 @@ Welcome to the frontend for **GopherFit**, a fitness app for University of Minne
 ## Setup
 Make sure to download the following if you don't have it already:
 * [Bun](https://bun.com/)
-* [Android Studio](https://developer.android.com/studio) (if you want to run on android emulator)
-* [XCode](https://developer.apple.com/xcode/) (if you want to run an iPhone emulator)
+* [Android Studio](https://developer.android.com/studio) (if you want to run an Android emulator)
+* [XCode](https://developer.apple.com/xcode/) (if you want to run an iOS emulator)
 
 
 Then clone this repo into your machine wherever you want it to be
