@@ -1,5 +1,5 @@
 import Profile from "@screens/Profile";
 
-const ProfileScreen = () => <Profile/>
+const ProfileScreen = () => <Profile />;
 
-export default ProfileScreen
+export default ProfileScreen;
