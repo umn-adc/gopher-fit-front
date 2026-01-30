@@ -26,55 +26,55 @@ export default function TabLayout() {
         // to prevent a hydration error in React Navigation v6.
         headerShown: useClientOnlyValue(false, true),
       }}>
-      <Tabs.Screen
-        name="index"
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: 'Home',
+            tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
+            headerRight: () => (
+              <Link href="/modal" asChild>
+                <Pressable>
+                  {({ pressed }) => (
+                    <FontAwesome
+                      name="info-circle"
+                      size={25}
+                      color={Colors[colorScheme ?? 'light'].text}
+                      style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
+                    />
+                  )}
+                </Pressable>
+              </Link>
+            ),
+          }}
+        />
+        <Tabs.Screen
+        name="nutrition"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable>
-                {({ pressed }) => (
-                  <FontAwesome
-                    name="info-circle"
-                    size={25}
-                    color={Colors[colorScheme ?? 'light'].text}
-                    style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
-                  />
-                )}
-              </Pressable>
-            </Link>
-          ),
-        }}
-      />
-      <Tabs.Screen
-      name="nutrition"
-      options={{
-        title: 'Nutrition',
-        tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color}/>
-      }}
-      />
-      <Tabs.Screen
-        name="workouts"
-        options={{
-          title: 'Workouts',
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />
-        }}
-      />
-      <Tabs.Screen
-        name="social"
-        options={{
-          title: 'Social',
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color}/>
-        }} 
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
+          title: 'Nutrition',
           tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color}/>
         }}
-      />
+        />
+        <Tabs.Screen
+          name="workouts"
+          options={{
+            title: 'Workouts',
+            tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />
+          }}
+        />
+        <Tabs.Screen
+          name="social"
+          options={{
+            title: 'Social',
+            tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color}/>
+          }} 
+        />
+        <Tabs.Screen
+          name="profile"
+          options={{
+            title: 'Profile',
+            tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color}/>
+          }}
+        />
     </Tabs>
   );
 }
