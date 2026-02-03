@@ -1,5 +1,5 @@
-import type { StyleProp, ViewStyle } from 'react-native';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import type { StyleProp, ViewStyle } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export interface ButtonProps {
   /** Is this the principal call to action on the page? */
@@ -7,7 +7,7 @@ export interface ButtonProps {
   /** What background color to use */
   backgroundColor?: string;
   /** How large should the button be? */
-  size?: 'small' | 'medium' | 'large';
+  size?: "small" | "medium" | "large";
   /** Button contents */
   label: string;
   /** Optional click handler */
@@ -18,7 +18,7 @@ export interface ButtonProps {
 /** Primary UI component for user interaction */
 export const Button = ({
   primary = false,
-  size = 'medium',
+  size = "medium",
   backgroundColor,
   label,
   style,
@@ -31,7 +31,11 @@ export const Button = ({
   const textSizeStyle = textSizeStyles[size];
 
   return (
-    <TouchableOpacity accessibilityRole="button" activeOpacity={0.6} onPress={onPress}>
+    <TouchableOpacity
+      accessibilityRole="button"
+      activeOpacity={0.6}
+      onPress={onPress}
+    >
       <View
         style={[
           styles.button,
@@ -39,7 +43,7 @@ export const Button = ({
           sizeStyle,
           style,
           !!backgroundColor && { backgroundColor },
-          { borderColor: 'black' },
+          { borderColor: "black" },
         ]}
       >
         <Text style={[textModeStyle, textSizeStyle]}>{label}</Text>
@@ -54,22 +58,22 @@ const styles = StyleSheet.create({
     borderRadius: 48,
   },
   buttonText: {
-    fontWeight: '700',
+    fontWeight: "700",
     lineHeight: 1,
   },
   primary: {
-    backgroundColor: '#1ea7fd',
+    backgroundColor: "#1ea7fd",
   },
   primaryText: {
-    color: 'white',
+    color: "white",
   },
   secondary: {
-    backgroundColor: 'transparent',
-    borderColor: 'rgba(0, 0, 0, 0.15)',
+    backgroundColor: "transparent",
+    borderColor: "rgba(0, 0, 0, 0.15)",
     borderWidth: 1,
   },
   secondaryText: {
-    color: '#333',
+    color: "#333",
   },
   small: {
     paddingVertical: 10,
