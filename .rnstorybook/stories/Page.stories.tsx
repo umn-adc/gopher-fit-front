@@ -1,9 +1,9 @@
-import type { Meta } from '@storybook/react';
+import type { Meta } from "@storybook/react";
 
-import { Page } from './Page';
+import { Page } from "./Page";
 
 export default {
-  title: 'Example/Page',
+  title: "Example/Page",
   component: Page,
 } as Meta<typeof Page>;
 

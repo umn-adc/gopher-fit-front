@@ -75,28 +75,7 @@ export default function TabLayout() {
           title: "Profile",
           tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
         }}
-        />
-        <Tabs.Screen
-          name="workouts"
-          options={{
-            title: 'Workouts',
-            tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />
-          }}
-        />
-        <Tabs.Screen
-          name="social"
-          options={{
-            title: 'Social',
-            tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color}/>
-          }} 
-        />
-        <Tabs.Screen
-          name="profile"
-          options={{
-            title: 'Profile',
-            tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color}/>
-          }}
-        />
+      />
     </Tabs>
   );
 }
