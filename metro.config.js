@@ -1,8 +1,10 @@
-// Learn more https://docs.expo.io/guides/customizing-metro
 const { getDefaultConfig } = require("expo/metro-config");
-
+const { withNativeWind } = require('nativewind/metro');
+ 
+const config = getDefaultConfig(__dirname)
+module.exports = withNativeWind(config, { input: './global.css' })
+// Learn more https://docs.expo.io/guides/customizing-metro
 /** @type {import('expo/metro-config').MetroConfig} */
-const config = getDefaultConfig(__dirname);
 
 // Only attempt to load Storybook's Metro helper when Storybook is explicitly enabled.
 // Some Storybook packages are published as ESM and will throw when required from

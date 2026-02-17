@@ -14,6 +14,7 @@ export default function ModalScreen() {
         darkColor="rgba(255,255,255,0.1)"
       />
       <EditScreenInfo path="app/modal.tsx" />
+      <Text className='text-2xl font-extralight'>HELLOOOOOOOO</Text>
 
       {/* Use a light status bar on iOS to account for the black space above the modal */}
       <StatusBar style={Platform.OS === "ios" ? "light" : "auto"} />
