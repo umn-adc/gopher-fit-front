@@ -3,23 +3,17 @@ import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { Home, Utensils, Dumbbell, Users, User, LucideIcon } from 'lucide-react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
-/**
- * TabNavigator Component for Expo Router
- * 
- * This component integrates with Expo Router's tab navigation system.
- * It replaces the default bottom tab bar with a custom design.
- */
+
 const TabNavigator: React.FC<BottomTabBarProps> = ({ state, descriptors, navigation }) => {
-  // Map of route names to icons
   const iconMap: Record<string, LucideIcon> = {
-    'index': Home,          // Home screen (index.tsx)
-    'nutrition': Utensils,  // You'll need to create this
-    'workouts': Dumbbell,   // You'll need to create this
-    'social': Users,        // You'll need to create this
-    'two': User,            // Currently your second tab (rename to 'profile')
+    'index': Home,          
+    'nutrition': Utensils,  
+    'workouts': Dumbbell,   
+    'social': Users,        
+    'two': User,            
   };
 
-  // Map of route names to labels
+  
   const labelMap: Record<string, string> = {
     'index': 'Home',
     'nutrition': 'Nutrition',
