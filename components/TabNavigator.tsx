@@ -4,31 +4,42 @@ import { Home, Utensils, Dumbbell, Users, User, LucideIcon } from 'lucide-react-
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
 
+
 const TabNavigator: React.FC<BottomTabBarProps> = ({ state, descriptors, navigation }) => {
-  const iconMap: Record<string, LucideIcon> = {
-    'index': Home,          
-    'nutrition': Utensils,  
-    'workouts': Dumbbell,   
-    'social': Users,        
-    'two': User,            
+  // Icon mapping - maps screen names to Lucide icons
+  const getIcon = (routeName: string): LucideIcon => {
+    const iconMap: Record<string, LucideIcon> = {
+      'index': Home,
+      'nutrition': Utensils,
+      'workouts': Dumbbell,
+      'social': Users,
+      'two': User,
+      'profile': User,
+    };
+    
+    return iconMap[routeName] || Home;
   };
 
-  
-  const labelMap: Record<string, string> = {
-    'index': 'Home',
-    'nutrition': 'Nutrition',
-    'workouts': 'Workouts',
-    'social': 'Social',
-    'two': 'Profile',
+  // Label mapping - gets clean labels for each route
+  const getLabel = (routeName: string, options: any): string => {
+    const labelMap: Record<string, string> = {
+      'index': 'Home',
+      'two': 'Profile',
+      'nutrition': 'Nutrition',
+      'workouts': 'Workouts',
+      'social': 'Social',
+    };
+    
+    // Use custom label if provided, otherwise use mapped label
+    return options.title || labelMap[routeName] || routeName;
   };
 
   return (
     <View style={styles.container}>
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
-        const label = labelMap[route.name] || options.title || route.name;
-        const Icon = iconMap[route.name] || Home;
-
+        const label = getLabel(route.name, options);
+        const Icon = getIcon(route.name);
         const isFocused = state.index === index;
 
         const onPress = () => {
@@ -39,8 +50,15 @@ const TabNavigator: React.FC<BottomTabBarProps> = ({ state, descriptors, navigat
           });
 
           if (!isFocused && !event.defaultPrevented) {
-            navigation.navigate(route.name);
+            navigation.navigate(route.name, route.params);
           }
+        };
+
+        const onLongPress = () => {
+          navigation.emit({
+            type: 'tabLongPress',
+            target: route.key,
+          });
         };
 
         return (
@@ -50,6 +68,7 @@ const TabNavigator: React.FC<BottomTabBarProps> = ({ state, descriptors, navigat
             accessibilityState={isFocused ? { selected: true } : {}}
             accessibilityLabel={options.tabBarAccessibilityLabel}
             onPress={onPress}
+            onLongPress={onLongPress}
             style={styles.tab}
             activeOpacity={0.7}
           >
@@ -80,15 +99,18 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
-    paddingVertical: 8,
-    paddingBottom: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
+    paddingVertical: 4,
+    paddingBottom: 4, // Extra padding for iOS safe area
+    marginHorizontal: 20, // More space from screen edges
+    marginBottom: 25, // More float above bottom
+    borderRadius: 28, // More rounded for modern look
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 16,
+    position: 'relative',
+    zIndex: 999,
   },
   tab: {
     flex: 1,
@@ -105,7 +127,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   activeIconContainer: {
-    backgroundColor: '#F9E6EA',
+    backgroundColor: '#F9E6EA', // Light pink background
   },
   label: {
     fontSize: 12,
