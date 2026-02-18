@@ -3,8 +3,21 @@ import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { Home, Utensils, Dumbbell, Users, User, LucideIcon } from 'lucide-react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
-
-
+/**
+ * Custom TabNavigator Component
+ * 
+ * This component can be used as a custom tabBar in Expo Router's Tabs component.
+ * It provides a custom design with Lucide icons and pink active states.
+ * 
+ * To use: In your _layout.tsx, add this to <Tabs>:
+ * 
+ * import TabNavigator from '@/components/TabNavigator';
+ * 
+ * <Tabs
+ *   tabBar={(props) => <TabNavigator {...props} />}
+ *   screenOptions={{ ... }}
+ * >
+ */
 const TabNavigator: React.FC<BottomTabBarProps> = ({ state, descriptors, navigation }) => {
   // Icon mapping - maps screen names to Lucide icons
   const getIcon = (routeName: string): LucideIcon => {
@@ -97,26 +110,29 @@ const TabNavigator: React.FC<BottomTabBarProps> = ({ state, descriptors, navigat
 
 const styles = StyleSheet.create({
   container: {
+    position: 'absolute', // Position absolutely to overlay content
+    bottom: 0, // Anchor to bottom
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
-    paddingVertical: 4,
-    paddingBottom: 4, // Extra padding for iOS safe area
-    marginHorizontal: 20, // More space from screen edges
-    marginBottom: 25, // More float above bottom
-    borderRadius: 28, // More rounded for modern look
+    paddingVertical: 6,
+    paddingBottom: 16,
+    marginHorizontal: 20,
+    marginBottom: 20,
+    borderRadius: 28,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -6 },
     shadowOpacity: 0.2,
     shadowRadius: 16,
     elevation: 16,
-    position: 'relative',
     zIndex: 999,
   },
   tab: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
+    paddingVertical: 4, // Reduced from 8
   },
   iconContainer: {
     width: 48,
