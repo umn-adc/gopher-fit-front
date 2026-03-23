@@ -2,7 +2,19 @@ const { getDefaultConfig } = require("expo/metro-config");
 const { withNativeWind } = require('nativewind/metro');
  
 const config = getDefaultConfig(__dirname)
-module.exports = withNativeWind(config, { input: './global.css' })
+
+// SVG Config
+config.resolver.assetExts = config.resolver.assetExts.filter((ext) => ext !== 'svg');
+config.resolver.sourceExts.push('svg');
+config.transformer = {
+  ...config.transformer,
+  babelTransformerPath: require.resolve('react-native-svg-transformer'),
+};
+
+//
+
+let processedConfig = withNativeWind(config, { input: './global.css' })
+
 // Learn more https://docs.expo.io/guides/customizing-metro
 /** @type {import('expo/metro-config').MetroConfig} */
 
@@ -15,7 +27,7 @@ if (process.env.EXPO_PUBLIC_ENVIRONMENT === "storybook") {
     const {
       withStorybook,
     } = require("@storybook/react-native/metro/withStorybook");
-    module.exports = withStorybook(config, { enabled: true });
+    processedConfig = withStorybook(processedConfig, { enabled: true });
   } catch (err) {
     // Fall back to the default config and surface a warning; Metro can continue.
     // Keep the error message minimal to avoid noisy logs during normal runs.
@@ -24,8 +36,7 @@ if (process.env.EXPO_PUBLIC_ENVIRONMENT === "storybook") {
       "Warning: could not load @storybook/react-native/metro/withStorybook — falling back to default Metro config. " +
         (err && err.message ? err.message : ""),
     );
-    module.exports = config;
   }
-} else {
-  module.exports = config;
 }
+
+module.exports = processedConfig
