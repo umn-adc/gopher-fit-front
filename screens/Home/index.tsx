@@ -9,6 +9,8 @@ import ProteinBlob from "../../assets/images/proteinBlob";
 import StreaksBlob from "../../assets/images/streaksBlob";
 import WorkoutsBlob from "../../assets/images/workoutsBlob";
 
+import { DailyNutrition } from "@components/DailyNutrition";
+
 export default function Home() {
   return (
     <ScrollView>
@@ -17,9 +19,16 @@ export default function Home() {
         <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 20, marginTop: 20 }}>
           <StatsBlob numerator={1847} goal={6133} unit="kcal" stat="Calories" Icon={CaloriesBlob} /> 
           <StatsBlob numerator={120} goal={150} unit="g" stat="Protein" Icon={ProteinBlob} />
-          <StatsBlob numerator={5} goal={7} unit="" stat="Streaks" Icon={StreaksBlob} />
           <StatsBlob numerator={3} goal={5} unit="this week" stat="Workouts" Icon={WorkoutsBlob} />
+          <StatsBlob numerator={5} unit="days" stat="Streak" Icon={StreaksBlob} />
         </View>
+
+        <DailyNutrition 
+          currCal={1847} calGoal={6133} 
+          currCarbs={210} carbGoal={250} 
+          currProtein={120} proteinGoal={150} 
+          currFats={55} fatsGoal={65} 
+        />
 
         <View
           style={styles.separator}
@@ -45,6 +54,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    gap: 20,
   },
   title: {
     fontSize: 20,

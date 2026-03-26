@@ -5,7 +5,7 @@ import { SvgProps } from "@node_modules/react-native-svg/lib/typescript";
 
 interface props {
     numerator: number;
-    goal: number;
+    goal?: number;
     unit: string;
     stat: string;
     Icon: React.FC<SvgProps>
@@ -21,18 +21,28 @@ export function StatsBlob(props: props) {
 
             <Text style={styles.titles}>{props.stat}</Text>
 
-            <Text style={styles.stats}>
-                <Text style={styles.current}>{props.numerator}</Text> / {props.goal} {props.unit}
-            </Text>
+            { props.goal ? (
+                <Text>
+                    <Text style={styles.stats}>
+                        <Text style={styles.current}>{props.numerator}</Text> / {props.goal} {props.unit}
+                    </Text>
+                    
+                    <View style={styles.bar}>
+                            <View style={{
+                                width: (props.numerator / props.goal) * 150,
+                                height: 10,
+                                borderRadius: 20,
+                                backgroundColor: "#7A0019"
+                            }} />
+                    </View>
+                </Text>
+            ) : (
+                <Text style={styles.stats}>
+                    <Text style={styles.current}>{props.numerator}</Text> {props.unit}
+                </Text>
+            )}
 
-            <View style={styles.bar}>
-                <View style={{ 
-                    width: (props.numerator / props.goal) * 150, 
-                    height: 10, 
-                    borderRadius: 20, 
-                    backgroundColor: "#7A0019" 
-                }} />
-            </View>
+
         </View>
     );
 }
@@ -57,12 +67,11 @@ const styles = StyleSheet.create({
     stats: {
         color: "gray",
         fontSize: 16,
-        marginTop: 20,
         marginLeft: 20, 
     },
     current: {
         color: "black",
-        fontSize: 20,
+        fontSize: 24,
         fontWeight: "bold",
     },
     bar: {
