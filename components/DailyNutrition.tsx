@@ -1,54 +1,61 @@
-import { View, Text } from 'react-native';
-import { StyleSheet } from "react-native";
+import { useEffect, useRef } from "react";
+import { View, Text } from "./Themed";
+import { Animated, StyleSheet } from "react-native";
 
-interface props {
-    currCal: number;
-    calGoal: number;
-    currCarbs: number;
-    carbGoal: number;
-    currProtein: number;
-    proteinGoal: number;
-    currFats: number;
-    fatsGoal: number;
+interface NutritionGoal {
+    id: string,
+    curr: number,
+    goal: number,
 }
 
-export function DailyNutrition(props: props) {
+interface Props {
+    goals: NutritionGoal[]
+}
+
+export function DailyNutrition(props: Props) {
+    const { goals } = props;
+
+    const progressFill = useRef(new Animated.Value(0)).current;
+    const maxValue = goals[0].goal ?? goals[0].curr;
+    
+    useEffect(() => {
+        Animated.timing(progressFill, {
+            toValue: Math.min(maxValue, goals[0].curr),
+            duration: 500,
+            useNativeDriver: false,
+        }).start();
+    }, [progressFill, maxValue, goals[0].curr]);
+
+    const width = progressFill.interpolate({
+        inputRange: [0, maxValue],
+        outputRange: ['0%', '100%'],
+        extrapolate: "clamp",
+    });
+
     return (
         <View style={styles.blob}>
-            <Text style={styles.title}>Daily Nutrition</Text>
+            <View style={styles.line}>
+                <Text style={styles.title}>Daily Nutrition</Text>
+                <Text style={styles.counter}>{goals[0].goal - goals[0].curr} left</Text>
+            </View>
 
-            <View style={{ flexDirection: "row", justifyContent: "space-between", margin: 20 }}>
-                <Text style={styles.info}>Calories:</Text>
-                <Text style={styles.info}>{props.currCal} / {props.calGoal} kcal</Text>
+            <View style={{ ...styles.line, margin: 20 }}>
+                <Text style={styles.info}>{goals[0].id}:</Text>
+                <Text style={styles.info}>{goals[0].curr} / {goals[0].goal} kcal</Text>
             </View>
 
             <View style={styles.bar}>
-                <View style={{ 
-                    width: (props.currCal / props.calGoal) * 350.7, 
-                    height: 10, 
-                    borderRadius: 20, 
-                    backgroundColor: "#7A0019" 
-                }} />
+                <Animated.View style={[styles.progress, { width }]} />
             </View>
 
             <View style={styles.statsBox}>
-                <View style={{ ...styles.statsColumns, marginLeft: 20 }}>
-                    <Text style={{ ...styles.info }}>Carbs:</Text>
-                    <Text style={styles.current}>{props.currCarbs}g</Text>
-                    <Text style={{ ...styles.info }}>/ {props.carbGoal}g</Text>
-                </View>
-
-                <View style={styles.statsColumns}>
-                    <Text style={{ ...styles.info }}>Protein:</Text>
-                    <Text style={styles.current}>{props.currProtein}g</Text>
-                    <Text style={{ ...styles.info }}>/ {props.proteinGoal}g</Text>
-                </View>
-
-                <View style={{ ...styles.statsColumns, marginRight: 20 }}>
-                    <Text style={{ ...styles.info }}>Fats:</Text>
-                    <Text style={styles.current}>{props.currFats}g</Text>
-                    <Text style={{ ...styles.info }}>/ {props.fatsGoal}g</Text>
-                </View>
+                {goals.slice(1).map((goal) => (
+                    <View key={goal.id} style={styles.statsColumns }>
+                        <Text style={styles.info}>{goal.id}:</Text>
+                        <Text style={styles.current}>{goal.curr}g</Text>
+                        <Text style={styles.info}>/ {goal.goal}g</Text>
+                    </View>
+                ))}
             </View>
         </View>
     );
@@ -59,7 +66,14 @@ const styles = StyleSheet.create({
         width: 390.7,
         height: 240.11,
         backgroundColor: "white",
+        borderWidth: 1.5,
+        borderColor: "#ccc",
         borderRadius: 30,
+    },
+    line: {
+        flexDirection: "row", 
+        justifyContent: "space-between", 
+        backgroundColor: "transparent"
     },
     title: {
         color: "black",
@@ -67,6 +81,17 @@ const styles = StyleSheet.create({
         fontSize: 20,
         marginTop: 20,
         marginLeft: 20,
+    },
+    counter: {
+        color: "black",
+        fontSize: 16,
+        fontWeight: "bold",
+        marginTop: 20,
+        marginRight: 20,
+        borderWidth: 1.5,
+        borderColor: "#ccc",
+        borderRadius: 20,
+        padding: 5
     },
     info: {
         color: "gray",
@@ -84,13 +109,19 @@ const styles = StyleSheet.create({
         marginLeft: 20,
         backgroundColor: "#e2cacf",
     },
+    progress: {
+        height: 10, 
+        borderRadius: 20, 
+        backgroundColor: "#7A0019" 
+    },
     statsBox: {
+        backgroundColor: "transparent",
         flexDirection: "row", 
         justifyContent: "space-between", 
-        marginLeft: 20, 
-        marginRight: 20
+        marginHorizontal: 40
     },
     statsColumns: {
+        backgroundColor: "transparent",
         flexDirection: "column", 
         alignItems: "center",
         marginTop: 20,

@@ -1,9 +1,9 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { Text, View } from "./Themed";
-import { StyleSheet } from "react-native";
+import { Animated, StyleSheet, TouchableOpacity } from "react-native";
 import { SvgProps } from "@node_modules/react-native-svg/lib/typescript";
 
-interface props {
+interface Props {
     numerator: number;
     goal?: number;
     unit: string;
@@ -11,39 +11,50 @@ interface props {
     Icon: React.FC<SvgProps>
 }
 
-export function StatsBlob(props: props) {
-    return (
-        <View style={styles.blobs}>
+export function StatsBlob(props: Props) {
+    const { numerator, goal, unit, stat, Icon } = props;
 
+    const progressFill = useRef(new Animated.Value(0)).current;
+    const maxValue = goal ?? numerator;
+
+    useEffect(() => {
+        Animated.timing(progressFill, {
+            toValue: Math.min(maxValue, numerator),
+            duration: 500,
+            useNativeDriver: false,
+        }).start();
+    }, [progressFill, maxValue, numerator]);
+
+    const width = progressFill.interpolate({
+        inputRange: [0, maxValue],
+        outputRange: ['0%', '100%'],
+        extrapolate: "clamp",
+    });
+
+    return (
+        <TouchableOpacity style={styles.blobs}>
             <div style={styles.icons}>
-                <props.Icon />
+                <Icon />
             </div>
 
-            <Text style={styles.titles}>{props.stat}</Text>
+            <Text style={styles.titles}>{stat}</Text>
 
-            { props.goal ? (
+            { goal ? (
                 <Text>
                     <Text style={styles.stats}>
-                        <Text style={styles.current}>{props.numerator}</Text> / {props.goal} {props.unit}
+                        <Text style={styles.current}>{numerator}</Text> / {goal} {unit}
                     </Text>
                     
                     <View style={styles.bar}>
-                            <View style={{
-                                width: (props.numerator / props.goal) * 150,
-                                height: 10,
-                                borderRadius: 20,
-                                backgroundColor: "#7A0019"
-                            }} />
+                        <Animated.View style={[styles.progress, { width }]} />
                     </View>
                 </Text>
             ) : (
                 <Text style={styles.stats}>
-                    <Text style={styles.current}>{props.numerator}</Text> {props.unit}
+                    <Text style={styles.current}>{numerator}</Text> {unit}
                 </Text>
             )}
-
-
-        </View>
+        </TouchableOpacity>
     );
 }
 
@@ -52,6 +63,8 @@ const styles = StyleSheet.create({
         width: 187.36,
         height: 249.13,
         backgroundColor: "white",
+        borderWidth: 1.5,
+        borderColor: "#ccc",
         borderRadius: 30,
     },
     icons: {
@@ -81,5 +94,10 @@ const styles = StyleSheet.create({
         marginLeft: 20, 
         marginTop: 25,
         backgroundColor: "#e2cacf",
+    },
+    progress: {
+        height: 10,
+        borderRadius: 20,
+        backgroundColor: "#7A0019"
     }
 });
