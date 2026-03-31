@@ -26,7 +26,6 @@ const TabNavigator: React.FC<BottomTabBarProps> = ({ state, descriptors, navigat
       'nutrition': Utensils,
       'workouts': Dumbbell,
       'social': Users,
-      'two': User,
       'profile': User,
     };
     
@@ -37,7 +36,7 @@ const TabNavigator: React.FC<BottomTabBarProps> = ({ state, descriptors, navigat
   const getLabel = (routeName: string, options: any): string => {
     const labelMap: Record<string, string> = {
       'index': 'Home',
-      'two': 'Profile',
+      'profile': 'Profile',
       'nutrition': 'Nutrition',
       'workouts': 'Workouts',
       'social': 'Social',
@@ -139,11 +138,12 @@ const styles = StyleSheet.create({
     height: 48,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 12,
+    borderRadius: 12, // Rounded corners for icon container
     marginBottom: 4,
   },
   activeIconContainer: {
     backgroundColor: '#F9E6EA', // Light pink background
+    borderRadius: 12, // Ensure rounded corners on active state
   },
   label: {
     fontSize: 12,
