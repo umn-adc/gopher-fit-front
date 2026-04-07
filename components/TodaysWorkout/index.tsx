@@ -1,9 +1,13 @@
 import React from 'react';
-import { View, Text } from './Themed';
-import { StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text } from '../Themed';
+import { TouchableOpacity } from "react-native";
+
+import { styles } from "./styles";
 
 import CardioIcon from '@assets/images/cardioIcon';
 import StrengthIcon from '@assets/images/strengthIcon';
+import FunctionalIcon from '@assets/images/functionalIcon';
+import TemplateIcon from '@assets/images/templateIcon';
 
 interface Workout {
     id: number,
@@ -24,20 +28,32 @@ function chooseIcon(workout: Workout) {
         case "Cardio":
             return <CardioIcon />;
         case "Functional":
-            return <CardioIcon />;
+            return <FunctionalIcon />;
         default:
-            return <CardioIcon />;
+            return <TemplateIcon />;
     }
 }
 
 export function TodaysWorkout(props: Props) {
+    let { purpose, workouts } = props;
+
+    workouts = workouts.map(workout => ({
+        ...workout,
+        category: workout.category.slice(0, 29),
+        time: Math.max(workout.time, 0),
+        target: workout.target.slice(0, 32),
+    }));
+
+    purpose = purpose.slice(0, 16); // Limit purpose to 16 characters to prevent overflow
+
+
     return (
         <View>
-            { props.workouts.length === 0 ? (
+            { workouts.length === 0 ? (
                 <View style={{ ...styles.blob, height: 165.13 }}>
                     <View style={styles.header}>
                         <Text style={styles.title}>Today&apos;s Workout</Text>
-                        <Text style={styles.purpose}>{props.purpose}</Text>
+                        <Text style={styles.purpose}>{purpose}</Text>
                     </View>
 
                     <View style={{ backgroundColor: "transparent" }}>
@@ -49,13 +65,13 @@ export function TodaysWorkout(props: Props) {
                     </View>
                 </View>
             ) : (
-                <View style={{ ...styles.blob, height: 165.13 + 95.98 * (props.workouts.length - 1) }}>
+                <View style={{ ...styles.blob, height: 165.13 + 95.98 * (workouts.length - 1) }}>
                     <View style={styles.header}>
                         <Text style={styles.title}>Today&apos;s Workout</Text>
-                        <Text style={styles.purpose}>{props.purpose}</Text>
+                        <Text style={styles.purpose}>{purpose}</Text>
                     </View>
 
-                    {props.workouts.map((workout) => (
+                    {workouts.map((workout) => (
                         <TouchableOpacity key={workout.id} style={styles.workout}>
                             <div style={styles.icon}>
                                 {chooseIcon(workout)}
@@ -72,57 +88,3 @@ export function TodaysWorkout(props: Props) {
         </View>
     );
 }
-
-const styles = StyleSheet.create({
-    blob: {
-        width: 390.7,
-        backgroundColor: "white",
-        borderWidth: 1.5,
-        borderColor: "#ccc",
-        borderRadius: 30,
-    },
-    header: {
-        flexDirection: "row", 
-        justifyContent: "space-between",
-        backgroundColor: "transparent"
-    },
-    title: {
-        color: "black",
-        fontWeight: "bold",
-        fontSize: 20,
-        marginTop: 20,
-        marginLeft: 20,
-    },
-    purpose: {
-        color: "white",
-        fontSize: 16,
-        fontWeight: "bold",
-        marginTop: 20,
-        marginRight: 20,
-        borderRadius: 20,
-        paddingHorizontal: 10,
-        backgroundColor: "#7A0019",
-    },
-    workout: {
-        width: 350.7,
-        height: 75.98,
-        marginTop: 20,
-        marginLeft: 20,
-        backgroundColor: "#ffcc3311",
-        borderRadius: 30,
-        flexDirection: "row",
-    },
-    icon: {
-        marginTop: 20,
-        marginLeft: 20,
-    },
-    target: {
-        color: "black",
-        fontSize: 16,
-    },
-    subtext: {
-        color: "gray",
-        fontSize: 14,
-    }
-
-});

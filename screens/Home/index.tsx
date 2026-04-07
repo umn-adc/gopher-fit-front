@@ -2,9 +2,9 @@ import React, { useEffect } from "react";
 import { StyleSheet } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, useAnimatedScrollHandler, interpolate, Extrapolate, withTiming } from 'react-native-reanimated';
 
-import EditScreenInfo from "@components/EditScreenInfo";
 import { View } from "@components/Themed";
 
+import EditScreenInfo from "@components/EditScreenInfo";
 import { StatsBlob } from "@components/StatsBlob";
 import CaloriesBlob from "@assets/images/caloriesBlob";
 import ProteinBlob from "@assets/images/proteinBlob";
@@ -23,14 +23,14 @@ import RibbonIcon from "@assets/images/ribbonIcon";
 
 export default function Home() {
   const nutritionData = [
-    { id: "Calories", curr: 1847, goal: 6133 },
+    { id: "Calories", curr: 1090, goal: 6133 },
     { id: "Carbs", curr: 210, goal: 250 },
     { id: "Protein", curr: 120, goal: 150 },
     { id: "Fats", curr: 55, goal: 65 },
   ];
 
   const workoutData = [
-    { id: 1, category: "Strength Training", time: 45, target: "Weightlifting" },
+    { id: 1, category: "a", time: 45, target: "Weightlifting" },
     { id: 2, category: "Strength Training", time: 45, target: "Bodyweight" },
     { id: 3, category: "Cardio", time: 60, target: "Running" },
     { id: 4, category: "Cardio", time: 30, target: "Swimming" },
@@ -138,10 +138,11 @@ export default function Home() {
             <FunctionButton Icon={ScanIcon} title="Scan at RecWell" description="Body composition check" /> 
             <FunctionButton Icon={BuddyIcon} title="Find Workout Buddy" description="Match with athletes" />
             <FunctionButton Icon={TrophyIcon} title="Leaderboard" description="See your ranking" />
-            <FunctionButton Icon={RibbonIcon} title="Achievements" description="View your badges" />
+          <FunctionButton Icon={RibbonIcon} title="Achievements" description="View your badges" />
           </Animated.View>
 
           <EditScreenInfo path="screens/Home/index.tsx" />
+
         </View>
       </Animated.ScrollView>
   );
