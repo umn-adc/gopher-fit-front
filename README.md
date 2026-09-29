@@ -39,8 +39,18 @@ Restart Expo when changing `.env`. A missing API URL produces a setup message.
 ## Login and data behavior
 
 Registration creates credentials and a profile together. Login uses a username.
-Access/refresh credentials remain **in memory only**; reload/restart requires login.
-Each browser tab has its own login and session. There is no AsyncStorage,
+On Android and iOS, login persists across restarts: only the **refresh token** is
+saved, in the device's secure storage (`expo-secure-store`: Keychain/Keystore,
+readable while unlocked, never migrated to another device). The access token stays
+in memory. At launch the app shows "Signing you in…" while it exchanges the saved
+token for a new pair. If that is rejected, offline or uncertain, the saved token is
+deleted and the login screen appears; only a rate-limited (429) attempt keeps it
+for the next launch. Logout, logout of all sessions, password change or reset,
+account deletion, local sign-out, a revoked session and any failed refresh all
+delete the saved token.
+
+On the **web**, access/refresh credentials remain **in memory only**; reload
+requires login and each browser tab has its own session. There is no AsyncStorage,
 localStorage, cookie, or cross-tab credential sharing. Refresh is serialized and
 rotates the pair together; an uncertain refresh response requires login again.
 Writes are not automatically retried after network failures. Check/reload data

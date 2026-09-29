@@ -13,6 +13,13 @@ export class ApiError extends Error {
 }
 export class StaleSessionError extends Error {}
 export type Session = AuthResponse & { expiresAt: number; generation: number };
+// Native builds keep only the refresh token here (lib/credentials.ts). Web has no
+// store, so its credentials stay in memory.
+export type CredentialStore = {
+  load(): Promise<string | null>;
+  save(refreshToken: string): Promise<void>;
+  clear(): Promise<void>;
+};
 type Options = {
   method?: "GET" | "POST" | "PUT" | "DELETE";
   body?: unknown;
@@ -25,7 +32,7 @@ const invalidSessionMessages = new Set([
   "Requires Bearer JWT token",
 ]);
 
-// One client per app, with memory-only credentials and exactly one refresh in flight.
+// One client per app, with in-memory credentials and exactly one refresh in flight.
 // The factory also lets focused tests use isolated clients and a fake transport.
 export function createApiClient(
   baseUrl: string,
@@ -37,7 +44,17 @@ export function createApiClient(
   let notice = "";
   const listeners = new Set<() => void>();
   const cooldowns = new Map<string, number>();
+  let credentials: CredentialStore | undefined;
+  let stored: Promise<void> = Promise.resolve();
   const emit = () => listeners.forEach((listener) => listener());
+  // Store writes run in order, so the last write is always the newest token or a clear.
+  function persist(refreshToken: string | null) {
+    const store = credentials;
+    if (!store) return;
+    stored = stored
+      .then(() => (refreshToken ? store.save(refreshToken) : store.clear()))
+      .catch(() => {});
+  }
   const assertCurrent = (expected: number) => {
     if (expected !== generation) throw new StaleSessionError("Session changed");
   };
@@ -46,6 +63,7 @@ export function createApiClient(
     session = null;
     refreshFlight = null;
     notice = message;
+    persist(null);
     emit();
   }
   function setSession(value: AuthResponse) {
@@ -57,6 +75,7 @@ export function createApiClient(
     };
     refreshFlight = null;
     notice = "";
+    persist(value.refresh_token);
     emit();
   }
   function bucket(path: string) {
@@ -169,6 +188,7 @@ export function createApiClient(
           expiresAt: Date.now() + pair.expires_in * 1000,
           generation,
         };
+        persist(pair.refresh_token);
         emit();
       } catch (error) {
         if (generation === expected)
@@ -234,6 +254,42 @@ export function createApiClient(
       }
     }
   }
+  // Exchanges a stored refresh token for a new pair at launch. A failure clears it
+  // (an uncertain refresh may already have consumed the token), except a 429,
+  // which the rate limiter returns before the refresh handler runs.
+  let restoreFlight: Promise<void> | null = null;
+  // Single flight: a second concurrent refresh of the same token would be treated
+  // as reuse and revoke the session.
+  function restore() {
+    restoreFlight ??= restoreStored();
+    return restoreFlight;
+  }
+  async function restoreStored() {
+    const store = credentials;
+    if (!store || session) return;
+    const expected = generation;
+    let refreshToken: string | null = null;
+    try {
+      refreshToken = await store.load();
+    } catch {
+      refreshToken = null;
+    }
+    if (!refreshToken || expected !== generation) return;
+    try {
+      const pair = await send<AuthResponse>("/auth/refresh", {
+        method: "POST",
+        body: { refresh_token: refreshToken },
+        public: true,
+      });
+      if (expected === generation) setSession(pair);
+    } catch (error) {
+      if (expected !== generation) return;
+      if (error instanceof ApiError && error.status === 429) {
+        notice = errorMessage(error);
+        emit();
+      } else clearSession("Your saved sign-in has ended. Please log in again.");
+    }
+  }
   async function authenticate(path: string, body: unknown) {
     const expected = generation;
     const pair = await send<AuthResponse>(path, {
@@ -246,6 +302,12 @@ export function createApiClient(
   }
   return {
     request,
+    restore,
+    setCredentialStore: (store: CredentialStore | undefined) => {
+      credentials = store;
+    },
+    // Resolves once queued store writes finish; lets tests observe persistence.
+    flushCredentials: () => stored,
     clearSession,
     getSession: () => session,
     getNotice: () => notice,
