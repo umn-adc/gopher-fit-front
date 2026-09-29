@@ -222,11 +222,28 @@ async function main() {
       204,
     );
     await visible(p, "300 kcal");
+    const homeRequests = [];
+    const track = (r) => {
+      const url = new URL(r.url());
+      if (url.origin === base) homeRequests.push(url.pathname + url.search);
+    };
+    p.on("request", track);
     await tab(p, "Home");
     await visible(p, "Target is zero");
     await p.getByText("300", { exact: true }).waitFor({ state: "visible" });
+    p.off("request", track);
+    // Home reads today's summary instead of paging through every meal.
+    assert.ok(
+      homeRequests.some((u) => u.startsWith("/nutrition/summary?date=")),
+    );
+    assert.ok(!homeRequests.some((u) => u.startsWith("/nutrition/meals")));
+    await tab(p, "Nutrition");
+    await field(p, "Calories (kcal) target", "200");
+    await clickRequest(p, "Save targets", "/nutrition/macros", "PUT");
+    await tab(p, "Home");
+    await visible(p, "Goal met! 100 over");
     console.log(
-      "PASS browser macro targets, meal/item create/edit, 204 refetch, refreshed Home totals",
+      "PASS browser macro targets, meal/item create/edit, 204 refetch, Home daily summary and over-target badge",
     );
     await tab(p, "Workouts");
     await button(p, "Add workout").click();
@@ -295,7 +312,23 @@ async function main() {
     await button(p, "Edit profile").click();
     await visible(p, `${user} · Your user ID: ${auth.user_id}`);
     await field(p, "Name", "Updated browser name");
-    await clickRequest(p, "Save profile", "/profile/", "PUT");
+    await field(p, "Weekly workout target (1–14, blank for none)", "15");
+    await button(p, "Save profile").click();
+    await p.getByText(/from 1 to 14/).waitFor({ state: "visible" });
+    await field(p, "Weekly workout target (1–14, blank for none)", "3");
+    await button(p, "Imperial (lb, ft/in)").click();
+    const savedProfile = await clickRequest(
+      p,
+      "Save profile",
+      "/profile/",
+      "PUT",
+    );
+    assert.equal(savedProfile.weekly_workout_target, 3);
+    assert.equal(savedProfile.unit_preference, "imperial");
+    await tab(p, "Home");
+    // The workout dated earlier in this run counts toward the new target.
+    await p.getByText(/^1 \/ 3 this week$/).waitFor({ state: "visible" });
+    await tab(p, "Profile");
     await button(p, "Privacy & Security").click();
     await p
       .getByLabel("Current password", { exact: true })

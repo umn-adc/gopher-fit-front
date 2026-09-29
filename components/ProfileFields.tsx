@@ -6,7 +6,7 @@ import {
   type Profile,
   type ProfileInput,
 } from "../lib/api-types";
-import { name, numberValue } from "../lib/validation";
+import { name, numberValue, weeklyTarget } from "../lib/validation";
 import { Choices, Field } from "./Form";
 import { Text } from "./Themed";
 export type ProfileDraft = {
@@ -19,6 +19,7 @@ export type ProfileDraft = {
   goals: string;
   sports: string;
   unit_preference: string;
+  weekly_workout_target: string;
 };
 const unitLabels = {
   metric: "Metric (kg, cm)",
@@ -34,6 +35,7 @@ export const emptyProfile: ProfileDraft = {
   goals: "",
   sports: "",
   unit_preference: "metric",
+  weekly_workout_target: "",
 };
 export function profileDraft(profile: Profile): ProfileDraft {
   return {
@@ -43,6 +45,10 @@ export function profileDraft(profile: Profile): ProfileDraft {
     weight: String(profile.weight),
     goals: (profile.goals ?? []).join("\n"),
     sports: (profile.sports ?? []).join("\n"),
+    weekly_workout_target:
+      profile.weekly_workout_target == null
+        ? ""
+        : String(profile.weekly_workout_target),
   };
 }
 export function profileInput(
@@ -70,8 +76,7 @@ export function profileInput(
     sports: list("sports"),
     unit_preference:
       draft.unit_preference === "imperial" ? "imperial" : "metric",
-    // Not edited in this form; PUT replaces the whole profile, so keep the saved value.
-    weekly_workout_target: original?.weekly_workout_target ?? null,
+    weekly_workout_target: weeklyTarget(draft.weekly_workout_target),
   };
 }
 export function ProfileFields({
@@ -120,6 +125,12 @@ export function ProfileFields({
         options={activities}
         value={value.activity_level}
         onChange={(v) => set("activity_level", v)}
+      />
+      <Field
+        label="Weekly workout target (1–14, blank for none)"
+        value={value.weekly_workout_target}
+        keyboardType="number-pad"
+        onChangeText={(v) => set("weekly_workout_target", v)}
       />
       <Choices
         label="Display units"

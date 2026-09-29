@@ -37,6 +37,7 @@ export type MealInput = Required<
   Pick<Schema<"MealRequest">, "date" | "meal_type" | "time">
 >;
 export type Meal = Schema<"MealResponse">;
+export type NutritionSummary = Schema<"NutritionSummaryResponse">;
 export type MacroInput = Required<Schema<"MacroGoalsRequest">>;
 export type Macros = Schema<"MacroGoalsResponse">;
 // Every field is sent; weight_unit is required whenever weight is positive.

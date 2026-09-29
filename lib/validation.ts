@@ -22,6 +22,16 @@ export function numberValue(
     );
   return result;
 }
+// Blank means no weekly target; otherwise 1–14 workouts, as the backend enforces.
+export function weeklyTarget(value: string) {
+  if (!value.trim()) return null;
+  const result = Number(value);
+  if (!Number.isInteger(result) || result < 1 || result > 14)
+    throw new Error(
+      "Weekly workout target must be a whole number from 1 to 14, or blank for none.",
+    );
+  return result;
+}
 export const passwordHelp =
   "Use at least seven letters/spaces, including an uppercase letter, plus a number and punctuation or a symbol. Maximum 72 UTF-8 bytes.";
 export function password(value: string, isNew = false) {

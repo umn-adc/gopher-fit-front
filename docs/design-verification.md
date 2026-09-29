@@ -54,8 +54,8 @@ features intentionally differ from the reference's sample content.
 ## Backend and asset limits
 
 The API doesn't support friend posts, likes/comments/messages, coach-assigned
-plans, notification delivery, privacy visibility settings, body scans, weekly
-workout targets, goal percentages, or calories burned. These are explained or shown
+plans, notification delivery, privacy visibility settings, body scans, goal
+percentages, or calories burned. (Weekly workout targets are now supported.) These are explained or shown
 as unavailable. Disabled notification controls do not pretend to save preferences.
 Body scan actions explain how to contact RecWell. Workout/achievement values come
 from actual records; the screenshot's fictional rankings and progress aren't seeded

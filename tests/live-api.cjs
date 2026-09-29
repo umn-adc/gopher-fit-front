@@ -71,6 +71,20 @@ async function main() {
   const updated = await a.request("/profile/");
   assert.deepEqual(updated.sports, ["Swimming"]);
   assert.equal(updated.goals, null);
+  assert.equal(updated.weekly_workout_target, null);
+  const targeted = await a.request("/profile/", {
+    method: "PUT",
+    body: { ...profile, ...updated, weekly_workout_target: 4 },
+  });
+  assert.equal(targeted.weekly_workout_target, 4);
+  await expectStatus(
+    a.request("/profile/", {
+      method: "PUT",
+      body: { ...profile, weekly_workout_target: 15 },
+    }),
+    400,
+  );
+  assert.equal((await a.request("/profile/")).weekly_workout_target, 4);
   const renamed = await a.request("/profile/username", {
     method: "PUT",
     body: { username: `renamed${suffix}` },
@@ -149,6 +163,25 @@ async function main() {
     calories: 270,
     protein: 7,
   });
+  // Home reads one daily summary instead of every meal page.
+  const summary = await a.request("/nutrition/summary?date=2026-09-27");
+  assert.equal(summary.calories, 270);
+  assert.equal(summary.protein, 7);
+  assert.deepEqual(summary.targets, await a.request("/nutrition/macros"));
+  const bSummary = await b.request("/nutrition/summary?date=2026-09-27");
+  assert.equal(bSummary.calories, 0);
+  assert.equal(bSummary.targets, null);
+  const dated = await allPages(
+    (path) => a.request(path),
+    "/nutrition/meals?date=2026-09-27",
+  );
+  assert.equal(dated.length, 200);
+  assert.deepEqual(
+    await a.request("/nutrition/meals?date=2026-09-26"),
+    [],
+    "date filter excludes other days",
+  );
+  await expectStatus(a.request("/nutrition/summary?date=2026-02-30"), 400);
   await a.request(`/nutrition/meals/${meal.id}`, {
     method: "PUT",
     body: { ...mealInput(meal), items: [] },
@@ -159,7 +192,7 @@ async function main() {
   );
   await a.request(`/nutrition/meals/${meal.id}`, { method: "DELETE" });
   console.log(
-    "PASS profile, nutrition CRUD, ownership, full replacement, 200-record pagination, totals, zero/missing targets",
+    "PASS profile and weekly target, nutrition CRUD, ownership, full replacement, 200-record pagination, date filter and daily summary, totals, zero/missing targets",
   );
   let workout = await a.request("/workouts/", {
     method: "POST",

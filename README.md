@@ -53,8 +53,9 @@ backend's whole metric units on registration. The profile's display units (metri
 by default, or imperial) control how the profile summary shows height and weight. New passwords follow the backend Unicode policy and 72-byte
 UTF-8 limit; ordinary login does not impose new-password complexity.
 
-Meal dates are local `YYYY-MM-DD` strings. Home loads **all** meal pages before
-showing today's totals. Weeks run from local Monday 00:00 inclusive to the next
+Meal dates are local `YYYY-MM-DD` strings. Home reads today's totals and macro
+targets from one `/nutrition/summary?date=` request using the device's local date,
+and shows "Goal met! N over" once calories exceed a nonzero target. Weeks run from local Monday 00:00 inclusive to the next
 Monday 00:00 exclusive, including DST changes. Workout timestamps require `T`
 and an offset; unknown historical dates remain unknown and are excluded from
 weekly counts. Screens refresh on focus. Offset pagination cannot provide a
@@ -76,8 +77,10 @@ lifts with an unknown unit. Workouts record their overall length in minutes
 never written, so old values stay intact. Training minutes use a workout's overall
 minutes when recorded, otherwise the sum of its exercises' minutes. Workout streaks
 are derived from distinct local workout dates; yesterday's streak stays active
-until the end of today. Weekly workout goals are not provided by the API. Friend discovery uses
-numeric IDs; your ID appears in the profile editor and Friends panel.
+until the end of today. An optional weekly workout target (1–14, set in the profile
+editor) shows as progress on Home's Workouts card; with no target, only the count is
+shown. Friend discovery uses numeric IDs; your ID appears in the profile editor and
+Friends panel.
 
 ## Recovery hosting
 

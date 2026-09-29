@@ -14,6 +14,7 @@ const {
   timestamp,
   localDate,
   weekBounds,
+  weeklyTarget,
 } = require("../lib/validation.ts");
 const { dailyTotals, progressWidth } = require("../lib/stats.ts");
 test("parent editors omit destructive nested lists, authoritative totals, and unchanged timestamps", () => {
@@ -103,6 +104,14 @@ test("workout items send a weight unit whenever the weight is positive", () => {
   const cardio = workoutItemInput({ ...item, weight: "0", weight_unit: "" });
   assert.equal(cardio.weight_unit, null);
   assert.equal(workoutItemInput({ ...item, weight: "0" }).weight_unit, "lb");
+});
+test("weekly workout targets are blank or 1-14 whole workouts", () => {
+  assert.equal(weeklyTarget(""), null);
+  assert.equal(weeklyTarget("  "), null);
+  assert.equal(weeklyTarget("1"), 1);
+  assert.equal(weeklyTarget(" 14 "), 14);
+  for (const value of ["0", "15", "2.5", "-3", "abc"])
+    assert.throws(() => weeklyTarget(value), /1 to 14/);
 });
 test("numeric/date/time/password validation matches service constraints", () => {
   assert.equal(numberValue("12.5", "Weight", false), 12.5);

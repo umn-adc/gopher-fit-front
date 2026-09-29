@@ -17,23 +17,28 @@ import CaloriesBlob from "../../assets/images/caloriesBlob";
 import ProteinBlob from "../../assets/images/proteinBlob";
 import StreaksBlob from "../../assets/images/streaksBlob";
 import WorkoutsBlob from "../../assets/images/workoutsBlob";
-import { allPages, api, ApiError, errorMessage } from "../../lib/api";
-import type { Macros, Meal, Profile } from "../../lib/api-types";
-import { nutritionTotals, workoutMinutes } from "../../lib/fitness";
+import { api, errorMessage } from "../../lib/api";
+import type { NutritionSummary, Profile } from "../../lib/api-types";
+import { workoutMinutes } from "../../lib/fitness";
 import { roundTenth } from "../../lib/units";
 import { useWorkoutHistory } from "../../lib/useFitness";
 import { localDate } from "../../lib/validation";
 import { useAuth } from "../../lib/auth";
 import { palette } from "../../constants/Design";
 
+function calorieBadge(calories: number, target: number) {
+  if (calories < target) return `${(target - calories).toLocaleString()} left`;
+  const over = calories - target;
+  return over ? `Goal met! ${over.toLocaleString()} over` : "Goal met!";
+}
+
 export default function Home() {
   const session = useAuth()!;
   const router = useRouter();
   const wide = useWindowDimensions().width >= 760;
-  const [totals, setTotals] = useState<ReturnType<
-    typeof nutritionTotals
-  > | null>(null);
-  const [macros, setMacros] = useState<Macros | null | undefined>(undefined);
+  // One summary request gives today's totals and targets (null when unset).
+  const [totals, setTotals] = useState<NutritionSummary | null>(null);
+  const macros = totals?.targets;
   const [profile, setProfile] = useState<Profile | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,7 +49,6 @@ export default function Home() {
     useCallback(() => {
       const controller = new AbortController();
       setTotals(null);
-      setMacros(undefined);
       setErrors([]);
       setLoading(true);
       const read = <T,>(path: string) =>
@@ -54,25 +58,11 @@ export default function Home() {
           setErrors((old) => [...old, errorMessage(e)]);
       };
       void Promise.allSettled([
-        allPages<Meal>(read, "/nutrition/meals")
-          .then((meals) => {
-            if (!controller.signal.aborted)
-              setTotals(nutritionTotals(meals, localDate()));
+        read<NutritionSummary>(`/nutrition/summary?date=${localDate()}`)
+          .then((value) => {
+            if (!controller.signal.aborted) setTotals(value);
           })
           .catch(report),
-        read<Macros>("/nutrition/macros")
-          .then((value) => {
-            if (!controller.signal.aborted) setMacros(value);
-          })
-          .catch((e) => {
-            if (
-              !controller.signal.aborted &&
-              e instanceof ApiError &&
-              e.status === 404
-            )
-              setMacros(null);
-            else report(e);
-          }),
         read<Profile>("/profile/")
           .then((value) => {
             if (!controller.signal.aborted) setProfile(value);
@@ -97,9 +87,10 @@ export default function Home() {
   const totalNote = (target: number | undefined) =>
     !totals
       ? loading
-        ? "Loading all meals…"
+        ? "Loading today's meals…"
         : "Total unavailable"
       : targetNote(target);
+  const weeklyTarget = profile?.weekly_workout_target;
   const displayName = profile?.name || session.username;
   const summary = history.summary;
   return (
@@ -136,15 +127,19 @@ export default function Home() {
         />
         <StatsBlob
           numerator={summary?.week}
+          goal={weeklyTarget}
           unit="this week"
           stat="Workouts"
           Icon={WorkoutsBlob}
+          showProgress={weeklyTarget != null}
           note={
             !summary
               ? history.error
                 ? "Count unavailable"
                 : "Loading workouts…"
-              : undefined
+              : weeklyTarget != null && summary.week >= weeklyTarget
+                ? "Weekly target met"
+                : undefined
           }
         />
         <StatsBlob
@@ -159,13 +154,9 @@ export default function Home() {
         <Section style={{ flex: 1 }}>
           <View style={ui.between}>
             <Text>Daily Nutrition</Text>
-            {totals && macros && (
-              <Badge>
-                {Math.max(
-                  0,
-                  macros.calories_target - totals.calories,
-                ).toLocaleString()}{" "}
-                left
+            {totals && macros && macros.calories_target > 0 && (
+              <Badge filled={totals.calories >= macros.calories_target}>
+                {calorieBadge(totals.calories, macros.calories_target)}
               </Badge>
             )}
           </View>
