@@ -2,6 +2,10 @@
 
 .env
 
+# Local design references and task notes (do not commit).
+figma_screenshots/
+prompt.md
+
 # dependencies
 node_modules/
 
