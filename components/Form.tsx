@@ -110,6 +110,7 @@ export function Action({
   compact,
   endIcon,
   style,
+  accessibilityLabel = title,
 }: {
   title: string;
   onPress: () => void;
@@ -120,6 +121,8 @@ export function Action({
   compact?: boolean;
   endIcon?: IconName;
   style?: StyleProp<ViewStyle>;
+  // Distinguishes repeated titles, e.g. one "Send request" per search result.
+  accessibilityLabel?: string;
 }) {
   return (
     <Pressable
@@ -127,7 +130,7 @@ export function Action({
       // otherwise flattens the callback to an empty object on native platforms.
       cssInterop={false}
       accessibilityRole="button"
-      accessibilityLabel={title}
+      accessibilityLabel={accessibilityLabel}
       accessibilityState={{ disabled: !!disabled }}
       disabled={disabled}
       onPress={onPress}

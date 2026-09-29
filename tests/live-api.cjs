@@ -344,10 +344,25 @@ async function main() {
     body: { user1_id: aid, user2_id: bid, status: "accepted" },
   });
   assert.equal((await a.request("/social/friendships/accepted")).length, 1);
+  // Username search: case-insensitive prefix, friends stay visible, no private fields.
+  const bName = b.getSession().username;
+  const search = (client, q) =>
+    client.request(`/social/users/search?q=${encodeURIComponent(q)}`);
+  const hits = await search(a, bName.slice(0, 6).toUpperCase());
+  const hit = hits.find((row) => row.id === bid);
+  assert.deepEqual(hit, { id: bid, username: bName, name: profile.name });
+  assert.ok(
+    !(await search(a, a.getSession().username)).length,
+    "self excluded",
+  );
+  await expectStatus(search(a, "bo"), 400);
   await a.request(`/social/friendships/${bid}`, {
     method: "PUT",
     body: { user1_id: aid, user2_id: bid, status: "blocked" },
   });
+  // A block hides both users from each other's searches.
+  assert.deepEqual(await search(a, bName), []);
+  assert.deepEqual(await search(b, a.getSession().username), []);
   await expectStatus(
     b.request(`/social/friendships/${aid}`, { method: "DELETE" }),
     400,
@@ -383,7 +398,7 @@ async function main() {
     ],
   );
   console.log(
-    "PASS two-account friendships, forbidden transitions, blocks, tied ranks across pages",
+    "PASS two-account friendships, username search with block exclusion, forbidden transitions, blocks, tied ranks across pages",
   );
   await fixture("recovery/false", "PUT");
   await expectStatus(

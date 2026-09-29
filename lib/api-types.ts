@@ -55,5 +55,6 @@ export type FriendshipInput = Omit<Schema<"FriendshipRequest">, "status"> & {
 export type Friendship = Omit<Schema<"FriendshipResponse">, "status"> & {
   status: FriendshipStatus;
 };
+export type UserSearchResult = Schema<"UserSearchResponse">;
 export type LeaderboardEntry = Schema<"LeaderboardResponse">;
 export type MuscleRank = Schema<"MuscleRankResponse">;

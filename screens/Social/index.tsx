@@ -16,7 +16,7 @@ import {
 } from "../../components/Form";
 import { ListStatus } from "../../components/ListStatus";
 import { Text, View } from "../../components/Themed";
-import { api, ApiError } from "../../lib/api";
+import { api, ApiError, errorMessage } from "../../lib/api";
 import type {
   Friendship,
   FriendshipInput,
@@ -24,9 +24,10 @@ import type {
   LeaderboardEntry,
   MuscleRank,
   PublicProfile,
+  UserSearchResult,
 } from "../../lib/api-types";
 import { useAuth } from "../../lib/auth";
-import { usePagedList, useTask } from "../../lib/hooks";
+import { useDebouncedValue, usePagedList, useTask } from "../../lib/hooks";
 import { name, numberValue } from "../../lib/validation";
 const collections = [
   ["accepted", "Friends"],
@@ -387,8 +388,17 @@ export default function Social() {
             <Text style={[ui.muted, { marginVertical: 8 }]}>
               Connect with athletes who share your goals and sports interests.
             </Text>
+            <UserSearch
+              userId={session.user_id}
+              onSelect={(id) => {
+                setUserId(String(id));
+                findUser(String(id));
+              }}
+              onRequested={() => setRevision((r) => r + 1)}
+              disabled={lookup.saving || task.saving}
+            />
             <Text style={ui.muted}>
-              Your user ID is {session.user_id}. Ask a friend for their user ID.
+              Or look up a user ID. Yours is {session.user_id}.
             </Text>
             <Field
               label="Friend's user ID"
@@ -452,6 +462,125 @@ export default function Social() {
         </>
       )}
     </Screen>
+  );
+}
+const SEARCH_MIN = 3;
+const SEARCH_DELAY_MS = 350;
+function UserSearch({
+  userId,
+  onSelect,
+  onRequested,
+  disabled,
+}: {
+  userId: number;
+  onSelect: (id: number) => void;
+  onRequested: () => void;
+  disabled: boolean;
+}) {
+  const [text, setText] = useState("");
+  const [results, setResults] = useState<UserSearchResult[] | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [error, setError] = useState("");
+  const [requested, setRequested] = useState<number[]>([]);
+  const task = useTask();
+  const typed = text.trim();
+  // Wait for typing to pause; the search route is rate limited per IP.
+  const q = useDebouncedValue(typed, SEARCH_DELAY_MS);
+  const short = [...typed].length < SEARCH_MIN;
+  useEffect(() => {
+    setError("");
+    if ([...q].length < SEARCH_MIN) {
+      setResults(null);
+      setSearching(false);
+      return;
+    }
+    const controller = new AbortController();
+    setSearching(true);
+    api
+      .request<UserSearchResult[]>(
+        `/social/users/search?q=${encodeURIComponent(q)}`,
+        { signal: controller.signal },
+      )
+      .then((rows) => {
+        if (!controller.signal.aborted) setResults(rows);
+      })
+      .catch((e) => {
+        if (!controller.signal.aborted) {
+          setResults(null);
+          setError(errorMessage(e));
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setSearching(false);
+      });
+    return () => controller.abort();
+  }, [q]);
+  const pending = !short && (typed !== q || searching);
+  return (
+    <View style={{ gap: 12 }}>
+      <Field
+        label="Search by username"
+        placeholder="Start of a username"
+        autoCapitalize="none"
+        autoCorrect={false}
+        value={text}
+        onChangeText={setText}
+      />
+      {typed.length > 0 && short && (
+        <Text style={ui.muted}>
+          Type at least {SEARCH_MIN} characters to search.
+        </Text>
+      )}
+      {pending && <Text style={ui.muted}>Searching…</Text>}
+      <Feedback error={error} />
+      {!pending && results?.length === 0 && (
+        <Text style={ui.muted}>No users start with “{q}”.</Text>
+      )}
+      {!pending &&
+        results?.map((row) => (
+          <View key={row.id} style={[ui.softRow, { flexWrap: "wrap" }]}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`View ${row.username}`}
+              disabled={disabled}
+              onPress={() => onSelect(row.id)}
+              // Wraps the button onto its own line on narrow screens.
+              style={[ui.row, { flexGrow: 1, flexBasis: 180, minWidth: 0 }]}
+            >
+              <Avatar name={row.username} size={40} muted />
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text numberOfLines={1}>{row.username}</Text>
+                {row.name && (
+                  <Text numberOfLines={1} style={ui.muted}>
+                    {row.name}
+                  </Text>
+                )}
+              </View>
+            </Pressable>
+            <Action
+              compact
+              title={requested.includes(row.id) ? "Requested" : "Send request"}
+              accessibilityLabel={`${requested.includes(row.id) ? "Request sent to" : "Send request to"} ${row.username}`}
+              disabled={disabled || task.saving || requested.includes(row.id)}
+              onPress={() =>
+                void task.run(async () => {
+                  await api.request<Friendship>("/social/friendships", {
+                    method: "POST",
+                    body: {
+                      user1_id: userId,
+                      user2_id: row.id,
+                      status: "pending",
+                    } satisfies FriendshipInput,
+                  });
+                  setRequested((ids) => [...ids, row.id]);
+                  onRequested();
+                }, `Friend request sent to ${row.username}.`)
+              }
+            />
+          </View>
+        ))}
+      <Feedback {...task} />
+    </View>
   );
 }
 function FriendshipActions({

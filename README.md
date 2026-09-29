@@ -79,8 +79,10 @@ minutes when recorded, otherwise the sum of its exercises' minutes. Workout stre
 are derived from distinct local workout dates; yesterday's streak stays active
 until the end of today. An optional weekly workout target (1–14, set in the profile
 editor) shows as progress on Home's Workouts card; with no target, only the count is
-shown. Friend discovery uses numeric IDs; your ID appears in the profile editor and
-Friends panel.
+shown. The Friends panel searches usernames by prefix (at least three characters,
+sent once typing pauses) and can send a request from each result; blocked users
+don't appear. Looking up a numeric user ID still works; your ID appears in the
+profile editor and Friends panel.
 
 ## Recovery hosting
 

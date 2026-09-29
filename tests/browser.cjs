@@ -294,10 +294,38 @@ async function main() {
     await button(p, "Show leaderboard").click();
     await p.getByText(new RegExp(`#1 ${user}`)).waitFor({ state: "visible" });
     await tab(p, "Friends");
+    const searches = [];
+    const trackSearch = (r) => {
+      const url = new URL(r.url());
+      if (url.pathname === "/social/users/search")
+        searches.push(url.searchParams.get("q"));
+    };
+    p.on("request", trackSearch);
+    const search = p.getByRole("textbox", {
+      name: "Search by username",
+      exact: true,
+    });
+    await search.fill("fr");
+    await visible(p, "Type at least 3 characters to search.");
+    await search.fill("");
+    await search.pressSequentially(friend, { delay: 40 });
+    await button(p, `Send request to ${friend}`).waitFor({ state: "visible" });
+    p.off("request", trackSearch);
+    assert.deepEqual(searches, [friend], "typing is debounced into one search");
+    await visible(p, "Browser Test");
+    await clickRequest(
+      p,
+      `Send request to ${friend}`,
+      "/social/friendships",
+      "POST",
+      201,
+    );
+    await button(p, `Request sent to ${friend}`).waitFor({ state: "visible" });
+    // Numeric ID lookup remains as a fallback and shows the pending request.
     await field(p, "Friend's user ID", String(bid));
     await button(p, "Look up user").click();
     await visible(p, `${friend} · User ${bid}`);
-    await clickRequest(p, "Send request", "/social/friendships", "POST", 201);
+    await button(p, "Cancel request").waitFor({ state: "visible" });
     await b.request(`/social/friendships/${auth.user_id}`, {
       method: "PUT",
       body: { user1_id: bid, user2_id: auth.user_id, status: "accepted" },
@@ -306,7 +334,7 @@ async function main() {
     await tab(p, "Social");
     await button(p, "Remove friend").waitFor({ state: "visible" });
     console.log(
-      "PASS browser workout/item CRUD, date editing, rankings refreshed, friend request/accept with two accounts",
+      "PASS browser workout/item CRUD, date editing, rankings refreshed, debounced username search, friend request/accept with two accounts",
     );
     await tab(p, "Profile");
     await button(p, "Edit profile").click();

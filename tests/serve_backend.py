@@ -33,6 +33,7 @@ def main():
             jwt_ttl_seconds=3,
             auth_rate_limit=10000,
             recovery_rate_limit=10000,
+            search_rate_limit=10000,
             cors_origins=["http://localhost:8081", "http://127.0.0.1:8081"],
             recovery_enabled=True,
             recovery_frontend_url="https://frontend.example/recovery",
