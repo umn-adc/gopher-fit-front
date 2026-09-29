@@ -9,6 +9,8 @@ export default function Root({ children }: { children: React.ReactNode }) {
     <html lang="en">
       <head>
         <meta charSet="utf-8" />
+        <meta name="referrer" content="no-referrer" />
+        <script dangerouslySetInnerHTML={{ __html: recoveryBootstrap }} />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
         <meta
           name="viewport"
@@ -30,12 +32,13 @@ export default function Root({ children }: { children: React.ReactNode }) {
   );
 }
 
+// Runs before app scripts, removes the email fragment, and keeps it only in memory.
+// The production CSP must allow this exact inline script by its SHA-256 hash.
+const recoveryBootstrap = `(function(){if(location.pathname.replace(/\\/$/,"")==="/recovery"&&location.hash){var p=new URLSearchParams(location.hash.slice(1));history.replaceState(null,"",location.pathname+location.search);window.__gopherRecovery={purpose:p.get("purpose")||"",token:p.get("token")||""};}})();`;
+
 const responsiveBackground = `
 body {
-  background-color: #fff;
+  background-color: #f5f5f7;
 }
-@media (prefers-color-scheme: dark) {
-  body {
-    background-color: #000;
-  }
-}`;
+:focus-visible { outline: 2px solid #890020; outline-offset: 3px; }
+`;

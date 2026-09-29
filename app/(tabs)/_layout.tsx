@@ -1,81 +1,82 @@
-import React from "react";
-import FontAwesome from "@expo/vector-icons/FontAwesome";
-import { Link, Tabs } from "expo-router";
-import { Pressable } from "react-native";
+import { Tabs } from "expo-router";
+import { PlatformPressable } from "@react-navigation/elements";
+import { useWindowDimensions } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Icon, type IconName } from "../../components/Design";
+import { palette } from "../../constants/Design";
 
-import Colors from "@constants/Colors";
-import { useColorScheme } from "@components/useColorScheme";
-import { useClientOnlyValue } from "@components/useClientOnlyValue";
-
-// You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
-function TabBarIcon(props: {
-  name: React.ComponentProps<typeof FontAwesome>["name"];
-  color: string;
-}) {
-  return <FontAwesome size={28} style={{ marginBottom: -3 }} {...props} />;
-}
-
+const tabs: { name: string; title: string; icon: IconName }[] = [
+  { name: "index", title: "Home", icon: "home" },
+  { name: "nutrition", title: "Nutrition", icon: "utensils" },
+  { name: "workouts", title: "Workouts", icon: "dumbbell" },
+  { name: "social", title: "Social", icon: "trophy" },
+  { name: "profile", title: "Profile", icon: "user" },
+];
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
+  const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const edge = Math.max(12, (width - 560) / 2);
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
-        // Disable the static render of the header on web
-        // to prevent a hydration error in React Navigation v6.
-        headerShown: useClientOnlyValue(false, true),
+        headerShown: false,
+        sceneStyle: { backgroundColor: palette.background },
+        tabBarActiveTintColor: palette.maroon,
+        tabBarInactiveTintColor: palette.muted,
+        tabBarActiveBackgroundColor: palette.maroonSoft,
+        tabBarHideOnKeyboard: true,
+        tabBarLabelPosition: "below-icon",
+        tabBarButton: ({ style, ...props }) => (
+          <PlatformPressable
+            {...props}
+            style={[style, { borderRadius: 18, paddingHorizontal: 0 }]}
+          />
+        ),
+        tabBarStyle: {
+          position: "absolute",
+          left: edge,
+          right: edge,
+          bottom: Math.max(12, insets.bottom),
+          height: 82,
+          paddingBottom: 0,
+          paddingTop: 0,
+          backgroundColor: palette.surface,
+          borderRadius: 24,
+          borderTopWidth: 0,
+          borderWidth: 1,
+          borderColor: palette.border,
+          elevation: 5,
+          shadowColor: "#252025",
+          shadowOffset: { width: 0, height: 4 },
+          shadowRadius: 8,
+          shadowOpacity: 0.12,
+        },
+        tabBarItemStyle: {
+          marginVertical: 10,
+          marginHorizontal: width < 360 ? 2 : 4,
+          borderRadius: 18,
+          overflow: "hidden",
+          paddingVertical: 5,
+        },
+        tabBarLabelStyle: {
+          fontSize: width < 360 ? 10 : 12,
+          lineHeight: 18,
+          fontWeight: "400",
+        },
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "Home",
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable>
-                {({ pressed }) => (
-                  <FontAwesome
-                    name="info-circle"
-                    size={25}
-                    color={Colors[colorScheme ?? "light"].text}
-                    style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
-                  />
-                )}
-              </Pressable>
-            </Link>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="nutrition"
-        options={{
-          title: "Nutrition",
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="workouts"
-        options={{
-          title: "Workouts",
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="social"
-        options={{
-          title: "Social",
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: "Profile",
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
-        }}
-      />
+      {tabs.map((tab) => (
+        <Tabs.Screen
+          key={tab.name}
+          name={tab.name}
+          options={{
+            title: tab.title,
+            tabBarIcon: ({ color }) => (
+              <Icon name={tab.icon} size={24} color={color} />
+            ),
+          }}
+        />
+      ))}
     </Tabs>
   );
 }

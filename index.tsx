@@ -1,10 +1,7 @@
-import { registerRootComponent } from "expo";
-import StorybookUI from "./.rnstorybook";
-import "expo-router/entry";
-
+// The Storybook script generates its requires file. Only one entry runs.
 if (process.env.EXPO_PUBLIC_ENVIRONMENT === "storybook") {
-  registerRootComponent(StorybookUI);
+  const { registerRootComponent } = require("expo");
+  registerRootComponent(require("./.rnstorybook").default);
 } else {
-  // Expo Router will handle the registration via its entry point
   require("expo-router/entry");
 }

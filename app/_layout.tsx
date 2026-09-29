@@ -1,16 +1,14 @@
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-} from "@react-navigation/native";
+import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import "react-native-reanimated";
 
-import { useColorScheme } from "@components/useColorScheme";
+import { palette } from "../constants/Design";
+import { StatusBar } from "expo-status-bar";
+import { AuthProvider, useAuth } from "../lib/auth";
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -27,6 +25,7 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- Metro resolves bundled font assets via require.
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
     ...FontAwesome.font,
   });
@@ -46,17 +45,47 @@ export default function RootLayout() {
     return null;
   }
 
-  return <RootLayoutNav />;
+  return (
+    <AuthProvider>
+      <RootLayoutNav />
+    </AuthProvider>
+  );
 }
 
 function RootLayoutNav() {
-  const colorScheme = useColorScheme();
+  const session = useAuth();
+  const router = useRouter();
+  const hadSession = useRef(!!session);
+  useEffect(() => {
+    // An accessible recovery screen may be behind a protected tab in history.
+    // Session invalidation must always land on login, regardless of that history.
+    if (hadSession.current && !session) router.replace("/login");
+    hadSession.current = !!session;
+  }, [session, router]);
 
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+    <ThemeProvider
+      value={{
+        ...DefaultTheme,
+        colors: {
+          ...DefaultTheme.colors,
+          background: palette.background,
+          primary: palette.maroon,
+        },
+      }}
+    >
+      <StatusBar style="dark" />
+      <Stack key={session?.generation ?? "signed-out"}>
+        <Stack.Protected guard={!!session}>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="modal"
+            options={{ presentation: "modal", title: "About GopherFit" }}
+          />
+        </Stack.Protected>
+        <Stack.Screen name="login/index" options={{ headerShown: false }} />
+        <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+        <Stack.Screen name="recovery" options={{ title: "Account recovery" }} />
       </Stack>
     </ThemeProvider>
   );
