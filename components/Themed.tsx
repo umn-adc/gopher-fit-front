@@ -34,15 +34,17 @@ export function Text(props: TextProps) {
   const { style, lightColor, darkColor, ...otherProps } = props;
   const color = useThemeColor({ light: lightColor, dark: darkColor }, "text");
 
-  return <DefaultText style={[{ color }, style]} {...otherProps} />;
+  return (
+    <DefaultText
+      style={[{ color, fontSize: 16, lineHeight: 24 }, style]}
+      {...otherProps}
+    />
+  );
 }
 
 export function View(props: ViewProps) {
   const { style, lightColor, darkColor, ...otherProps } = props;
-  const backgroundColor = useThemeColor(
-    { light: lightColor, dark: darkColor },
-    "background",
-  );
+  const backgroundColor = lightColor ?? darkColor ?? "transparent";
 
   return <DefaultView style={[{ backgroundColor }, style]} {...otherProps} />;
 }

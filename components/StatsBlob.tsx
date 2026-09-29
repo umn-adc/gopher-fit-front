@@ -1,76 +1,70 @@
 import React from "react";
-import { Text, View } from "./Themed";
-import { StyleSheet } from "react-native";
-import { SvgProps } from "@node_modules/react-native-svg/lib/typescript";
-
-interface props {
-    numerator: number;
-    goal: number;
-    unit: string;
-    stat: string;
-    Icon: React.FC<SvgProps>
+import { StyleSheet, View, useWindowDimensions } from "react-native";
+import { SvgProps } from "react-native-svg";
+import { Text } from "./Themed";
+import { Progress } from "./Design";
+import { palette } from "../constants/Design";
+interface Props {
+  numerator?: number;
+  goal?: number | null;
+  unit: string;
+  stat: string;
+  Icon: React.FC<SvgProps>;
+  note?: string;
+  showProgress?: boolean;
 }
-
-export function StatsBlob(props: props) {
-    return (
-        <View style={styles.blobs}>
-
-            <div style={styles.icons}>
-                <props.Icon />
-            </div>
-
-            <Text style={styles.titles}>{props.stat}</Text>
-
-            <Text style={styles.stats}>
-                <Text style={styles.current}>{props.numerator}</Text> / {props.goal} {props.unit}
-            </Text>
-
-            <View style={styles.bar}>
-                <View style={{ 
-                    width: (props.numerator / props.goal) * 150, 
-                    height: 10, 
-                    borderRadius: 20, 
-                    backgroundColor: "#7A0019" 
-                }} />
-            </View>
+export function StatsBlob({
+  numerator,
+  goal,
+  unit,
+  stat,
+  Icon,
+  note,
+  showProgress = true,
+}: Props) {
+  const wide = useWindowDimensions().width >= 760;
+  return (
+    <View
+      style={[
+        styles.card,
+        wide && { flexBasis: 0, flexShrink: 1 },
+        !showProgress && { minHeight: 205 },
+      ]}
+    >
+      <Icon />
+      <Text style={styles.title}>{stat}</Text>
+      <Text style={styles.value}>
+        <Text style={styles.current}>
+          {numerator === undefined ? "—" : numerator.toLocaleString()}
+        </Text>
+        {goal != null ? ` / ${goal}` : ""}{" "}
+        <Text style={styles.unit}>{unit}</Text>
+      </Text>
+      {showProgress && (
+        <View style={{ marginTop: 32 }}>
+          <Progress value={numerator} goal={goal} label={`${stat} progress`} />
         </View>
-    );
+      )}
+      {note && <Text style={styles.note}>{note}</Text>}
+    </View>
+  );
 }
-
 const styles = StyleSheet.create({
-    blobs: {
-        width: 187.36,
-        height: 249.13,
-        backgroundColor: "white",
-        borderRadius: 30,
-    },
-    icons: {
-        marginLeft: 20,
-        marginTop: 20,
-    },
-    titles: {
-        color: "gray",
-        fontSize: 16,
-        marginTop: 20,
-        marginLeft: 20,
-    },
-    stats: {
-        color: "gray",
-        fontSize: 16,
-        marginTop: 20,
-        marginLeft: 20, 
-    },
-    current: {
-        color: "black",
-        fontSize: 20,
-        fontWeight: "bold",
-    },
-    bar: {
-        width: 150,
-        height: 10,
-        borderRadius: 20,
-        marginLeft: 20, 
-        marginTop: 25,
-        backgroundColor: "#e2cacf",
-    }
+  card: {
+    flexGrow: 1,
+    flexBasis: "45%",
+    minWidth: 0,
+    minHeight: 249,
+    alignSelf: "flex-start",
+    padding: 20,
+    backgroundColor: palette.surface,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: palette.border,
+  },
+  title: { color: palette.muted, fontSize: 14, lineHeight: 20, marginTop: 36 },
+  value: { color: palette.muted, fontSize: 14, lineHeight: 32, marginTop: 26 },
+  current: { color: palette.text, fontSize: 24, lineHeight: 32 },
+  unit: { color: palette.muted, fontSize: 12 },
+  note: { color: palette.muted, fontSize: 12, lineHeight: 17, marginTop: 8 },
 });
