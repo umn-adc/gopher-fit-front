@@ -8,9 +8,10 @@ import {
   ui,
 } from "../../components/Design";
 import { palette } from "../../constants/Design";
-import { useWorkoutHistory } from "../../lib/useFitness";
+import { useProfile, useWorkoutHistory } from "../../lib/useFitness";
 import {
   Action,
+  Choices,
   Feedback,
   Field,
   Screen,
@@ -20,15 +21,29 @@ import {
 import { ListStatus } from "../../components/ListStatus";
 import { Text, View } from "../../components/Themed";
 import { api } from "../../lib/api";
-import type {
-  Workout,
-  WorkoutItem,
-  WorkoutItemInput,
-} from "../../lib/api-types";
+import type { Workout, WorkoutItem } from "../../lib/api-types";
 import { usePagedList, useTask } from "../../lib/hooks";
-import { name, numberValue } from "../../lib/validation";
-import { workoutInput } from "../../lib/writes";
-const blankWorkout = { workout_name: "", duration: "0", occurred_at: "" };
+import {
+  formatWeight,
+  preferredWeightUnit,
+  roundTenth,
+  type UnitPreference,
+  weightUnits,
+} from "../../lib/units";
+import { workoutInput, workoutItemInput } from "../../lib/writes";
+const blankWorkout = {
+  workout_name: "",
+  duration_minutes: "",
+  occurred_at: "",
+};
+function durationLabel(workout: Workout) {
+  if (workout.duration_minutes != null)
+    return `${roundTenth(workout.duration_minutes)} min`;
+  // Deprecated field with no defined unit, from before duration_minutes existed.
+  return workout.duration
+    ? `${workout.duration} (older entry, unit unknown)`
+    : "Duration unknown";
+}
 export default function Workouts() {
   const scrollRef = useRef<ScrollView>(null);
   const list = usePagedList<Workout>("/workouts/");
@@ -37,6 +52,7 @@ export default function Workouts() {
   const task = useTask();
   const [revision, setRevision] = useState(0);
   const history = useWorkoutHistory(revision);
+  const { profile } = useProfile();
   const refresh = async () => {
     await list.reload();
     setRevision((r) => r + 1);
@@ -48,7 +64,10 @@ export default function Workouts() {
         ? blankWorkout
         : {
             workout_name: workout.workout_name,
-            duration: String(workout.duration),
+            duration_minutes:
+              workout.duration_minutes == null
+                ? ""
+                : String(workout.duration_minutes),
             occurred_at: workout.occurred_at ?? "",
           },
     );
@@ -147,11 +166,21 @@ export default function Workouts() {
             }
           />
           <Field
-            label="Workout duration (unit unspecified)"
-            keyboardType="number-pad"
-            value={draft.duration}
-            onChangeText={(duration) => setDraft({ ...draft, duration })}
+            label="Workout duration in minutes (blank if unknown)"
+            keyboardType="decimal-pad"
+            value={draft.duration_minutes}
+            onChangeText={(duration_minutes) =>
+              setDraft({ ...draft, duration_minutes })
+            }
           />
+          {editing !== "new" &&
+            editing.duration_minutes == null &&
+            editing.duration > 0 && (
+              <Text style={ui.muted}>
+                Older entry: duration {editing.duration}, unit unknown. It stays
+                saved; enter minutes above to record the length.
+              </Text>
+            )}
           <Field
             label="When (timestamp with timezone, or blank for unknown)"
             placeholder="2026-09-25T08:30:00-05:00"
@@ -205,6 +234,7 @@ export default function Workouts() {
         <WorkoutCard
           key={workout.id}
           workout={workout}
+          preference={profile?.unit_preference}
           onEdit={() => edit(workout)}
           refresh={refresh}
         />
@@ -303,20 +333,23 @@ const blankItem = {
   reps: "0",
   weight: "0",
   duration_minutes: "0",
+  weight_unit: "",
 };
 const itemLabels = {
   exercise_name: "Exercise name",
   sets: "Sets",
   reps: "Reps",
-  weight: "Weight (unit unspecified)",
+  weight: "Weight",
   duration_minutes: "Exercise duration (minutes)",
 };
 function WorkoutCard({
   workout,
+  preference,
   onEdit,
   refresh,
 }: {
   workout: Workout;
+  preference?: UnitPreference;
   onEdit: () => void;
   refresh: () => Promise<void>;
 }) {
@@ -329,13 +362,15 @@ function WorkoutCard({
     setEditing(item);
     setDraft(
       item === "new"
-        ? blankItem
+        ? { ...blankItem, weight_unit: preferredWeightUnit(preference) }
         : {
             exercise_name: item.exercise_name,
             sets: String(item.sets),
             reps: String(item.reps),
             weight: String(item.weight),
             duration_minutes: String(item.duration_minutes),
+            // Older items have no unit; the user must choose rather than guess.
+            weight_unit: item.weight_unit ?? "",
           },
     );
   }
@@ -371,7 +406,7 @@ function WorkoutCard({
           {workout.occurred_at
             ? new Date(workout.occurred_at).toLocaleString()
             : "Date unknown"}{" "}
-          · Duration: {workout.duration} (unit unspecified)
+          · Duration: {durationLabel(workout)}
         </Text>
         <View style={styles.row}>
           <Action
@@ -435,7 +470,8 @@ function WorkoutCard({
             </View>
             <Text style={ui.muted}>
               {item.exercise_name} · {item.sets} sets × {item.reps} reps ·
-              Weight {item.weight} · {item.duration_minutes} min
+              Weight {formatWeight(item.weight, item.weight_unit)} ·{" "}
+              {item.duration_minutes} min
             </Text>
             <View style={styles.row}>
               <Action
@@ -467,7 +503,7 @@ function WorkoutCard({
               editing === "new" ? "Add exercise item" : "Edit exercise item"
             }
           >
-            {(Object.keys(blankItem) as (keyof typeof blankItem)[]).map(
+            {(Object.keys(itemLabels) as (keyof typeof itemLabels)[]).map(
               (key) => (
                 <Field
                   key={key}
@@ -480,22 +516,24 @@ function WorkoutCard({
                 />
               ),
             )}
+            <Choices
+              label="Weight unit"
+              options={weightUnits}
+              value={draft.weight_unit}
+              onChange={(weight_unit) => setDraft({ ...draft, weight_unit })}
+            />
+            {!draft.weight_unit && (
+              <Text style={ui.muted}>
+                This older entry has no weight unit. Choose the unit it was
+                logged in before saving a weight.
+              </Text>
+            )}
             <Action
               title={task.saving ? "Saving exercise…" : "Save exercise"}
               disabled={task.saving}
               onPress={() =>
                 void task.run(async () => {
-                  const body: WorkoutItemInput = {
-                    exercise_name: name(draft.exercise_name, "Exercise name"),
-                    sets: numberValue(draft.sets, "Sets"),
-                    reps: numberValue(draft.reps, "Reps"),
-                    weight: numberValue(draft.weight, "Weight", false),
-                    duration_minutes: numberValue(
-                      draft.duration_minutes,
-                      "Exercise duration",
-                      false,
-                    ),
-                  };
+                  const body = workoutItemInput(draft);
                   await api.request<WorkoutItem | void>(
                     `${path}/items${editing === "new" ? "" : `/${editing.id}`}`,
                     { method: editing === "new" ? "POST" : "PUT", body },

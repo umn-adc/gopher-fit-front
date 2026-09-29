@@ -49,8 +49,8 @@ that cannot guarantee server revocation.
 
 Profile editing uses whole centimetres and kilograms; zero means unspecified.
 The eight-step introduction accepts inches and pounds and converts them to the
-backend's whole metric units on registration. The profile summary converts saved
-metric values back to rounded inches/pounds for display. New passwords follow the backend Unicode policy and 72-byte
+backend's whole metric units on registration. The profile's display units (metric
+by default, or imperial) control how the profile summary shows height and weight. New passwords follow the backend Unicode policy and 72-byte
 UTF-8 limit; ordinary login does not impose new-password complexity.
 
 Meal dates are local `YYYY-MM-DD` strings. Home loads **all** meal pages before
@@ -67,13 +67,16 @@ lists in the UI. Macro edits submit all four targets, including zero targets.
 The frontend restricts integers to JavaScript's exact safe range (which is narrower
 than the backend's signed 64-bit range) rather than silently rounding values.
 
-Workout **weight units and overall duration units are unresolved in the backend**.
-They are labeled as unspecified, with no conversion. Exercise duration uses the
-explicit `duration_minutes` field. Agree on a shared weight convention before
-interpreting leaderboard comparisons. Workout streaks are derived from distinct
-local workout dates; yesterday's streak stays active until the end of today.
-Training minutes sum exercise `duration_minutes`, never the unspecified overall
-duration. Weekly workout goals are not provided by the API. Friend discovery uses
+Every weighted exercise records its unit, kg or lb. New exercises default to the
+profile's display units (kg for metric, lb for imperial). Exercises logged before
+units existed show "unit unknown" and need a unit chosen when edited; the app never
+guesses. Rankings compare kilograms, show them in the preferred unit, and exclude
+lifts with an unknown unit. Workouts record their overall length in minutes
+(`duration_minutes`). The older unitless `duration` is shown as "unit unknown" and
+never written, so old values stay intact. Training minutes use a workout's overall
+minutes when recorded, otherwise the sum of its exercises' minutes. Workout streaks
+are derived from distinct local workout dates; yesterday's streak stays active
+until the end of today. Weekly workout goals are not provided by the API. Friend discovery uses
 numeric IDs; your ID appears in the profile editor and Friends panel.
 
 ## Recovery hosting

@@ -35,6 +35,7 @@ import {
 import { Text } from "../../components/Themed";
 import { api, errorMessage } from "../../lib/api";
 import { Profile as ProfileData } from "../../lib/api-types";
+import { formatBodyWeight, formatHeight } from "../../lib/units";
 import { useAuth } from "../../lib/auth";
 import { useTask } from "../../lib/hooks";
 import { name, password, passwordHelp } from "../../lib/validation";
@@ -159,12 +160,16 @@ export default function Profile() {
             {[
               [profile?.age || "—", "Age"],
               [
-                profile?.height ? `${Math.round(profile.height / 2.54)}″` : "—",
+                profile
+                  ? formatHeight(profile.height, profile.unit_preference)
+                  : "—",
                 "Height",
               ],
               [
-                profile?.weight ? Math.round(profile.weight / 0.45359237) : "—",
-                "lbs",
+                profile
+                  ? formatBodyWeight(profile.weight, profile.unit_preference)
+                  : "—",
+                "Weight",
               ],
               [history.summary?.streak ?? "—", "Day Streak"],
             ].map(([value, label]) => (

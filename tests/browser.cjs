@@ -241,7 +241,7 @@ async function main() {
     await p.getByText(/Date unknown/).waitFor({ state: "visible" });
     await button(p, "Add exercise").click();
     await field(p, "Exercise name", "Browser Press");
-    await field(p, "Weight (unit unspecified)", "125.5");
+    await field(p, "Weight", "125.5");
     const lift = await clickRequest(
       p,
       "Save exercise",
@@ -249,8 +249,12 @@ async function main() {
       "POST",
       201,
     );
+    // New exercises default to the metric preference's unit.
+    assert.equal(lift.weight_unit, "kg");
+    await p.getByText(/Weight 125.5 kg/).waitFor({ state: "visible" });
     await button(p, "Edit Browser Press").click();
-    await field(p, "Weight (unit unspecified)", "130.5");
+    await field(p, "Weight", "130.5");
+    await button(p, "lb").click();
     await clickRequest(
       p,
       "Save exercise",
@@ -258,14 +262,15 @@ async function main() {
       "PUT",
       204,
     );
-    await p.getByText(/Weight 130.5/).waitFor({ state: "visible" });
+    await p.getByText(/Weight 130.5 lb/).waitFor({ state: "visible" });
     await button(p, "Edit workout").click();
     await button(p, "Use current time").click();
     await clickRequest(p, "Save workout", `/workouts/${workout.id}`, "PUT");
     await tab(p, "Social");
     await tab(p, "Rankings");
     await p
-      .getByText(/^Browser Press · Weight 130.5/)
+      // Rankings are kilograms: 130.5 lb is 59.2 kg for a metric user.
+      .getByText(/^Browser Press · 59.2 kg/)
       .filter({ visible: true })
       .waitFor({ state: "visible" });
     await field(p, "Exercise", "Browser Press");

@@ -42,7 +42,7 @@ test("streaks count distinct local days through DST and ignore unknown and futur
   assert.equal(summary.streak, 2, "yesterday's streak remains active today");
   assert.equal(summary.longest, 2);
   assert.equal(summary.total, 6);
-  assert.equal(summary.minutes, 60, "sum explicit exercise minutes only");
+  assert.equal(summary.minutes, 60, "without overall minutes, sum exercises");
   assert.equal(summary.today.length, 0);
   summary = workoutSummary([...rows, { occurred_at: now.toISOString() }], now);
   assert.equal(summary.streak, 3);
@@ -56,6 +56,11 @@ test("streaks count distinct local days through DST and ignore unknown and futur
     workoutSummary(rows, new Date("2026-03-12T09:00:00-05:00")).streak,
     0,
   );
+  // A recorded overall duration replaces the exercise sum for that workout.
+  const timed = [{ ...rows[0], duration_minutes: 45 }, ...rows.slice(1)];
+  assert.equal(workoutSummary(timed, now).minutes, 95);
+  const zero = [{ ...rows[0], duration_minutes: 0 }, ...rows.slice(1)];
+  assert.equal(workoutSummary(zero, now).minutes, 50);
 });
 
 test("dashboard macros total all today's items without including other days", () => {

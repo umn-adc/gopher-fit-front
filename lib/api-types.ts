@@ -39,7 +39,8 @@ export type MealInput = Required<
 export type Meal = Schema<"MealResponse">;
 export type MacroInput = Required<Schema<"MacroGoalsRequest">>;
 export type Macros = Schema<"MacroGoalsResponse">;
-export type WorkoutItemInput = Schema<"WorkoutItemRequest">;
+// Every field is sent; weight_unit is required whenever weight is positive.
+export type WorkoutItemInput = Required<Schema<"WorkoutItemRequest">>;
 export type WorkoutItem = Schema<"WorkoutItemResponse">;
 export type WorkoutInput = Omit<Schema<"WorkoutRequest">, "items">;
 export type Workout = Schema<"WorkoutResponse">;

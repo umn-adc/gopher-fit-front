@@ -20,6 +20,14 @@ export function nutritionTotals(meals: Meal[], day: string) {
     );
 }
 
+// The overall duration when recorded, otherwise the exercises' minutes.
+export function workoutMinutes(workout: Workout) {
+  return (
+    workout.duration_minutes ??
+    (workout.items ?? []).reduce((n, item) => n + item.duration_minutes, 0)
+  );
+}
+
 export function workoutSummary(workouts: Workout[], now = new Date()) {
   const week = weekBounds(now);
   const dated = workouts.filter(
@@ -52,11 +60,7 @@ export function workoutSummary(workouts: Workout[], now = new Date()) {
     longest = Math.max(longest, run);
   });
   const minutes = (rows: Workout[]) =>
-    rows.reduce(
-      (sum, w) =>
-        sum + (w.items ?? []).reduce((n, i) => n + i.duration_minutes, 0),
-      0,
-    );
+    rows.reduce((sum, w) => sum + workoutMinutes(w), 0);
   return {
     total: workouts.length,
     week: weekWorkouts.length,

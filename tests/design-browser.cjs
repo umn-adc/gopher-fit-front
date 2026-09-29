@@ -65,7 +65,7 @@ async function main() {
         method: "POST",
         body: {
           workout_name: i === 0 ? "Strength Training" : "Cardio & Conditioning",
-          duration: 45,
+          duration_minutes: 45,
           occurred_at: date.toISOString(),
         },
       });
@@ -83,6 +83,7 @@ async function main() {
             sets: 3,
             reps: 10,
             weight: i === 0 ? 185 : 0,
+            weight_unit: i === 0 ? "lb" : null,
             duration_minutes: minutes,
           },
         });

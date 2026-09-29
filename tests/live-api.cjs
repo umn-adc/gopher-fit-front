@@ -1,7 +1,11 @@
 require("./register-typescript.cjs");
 const assert = require("node:assert/strict");
 const { createApiClient, allPages, ApiError } = require("../lib/api.ts");
-const { mealInput, workoutInput } = require("../lib/writes.ts");
+const {
+  mealInput,
+  workoutInput,
+  workoutItemInput,
+} = require("../lib/writes.ts");
 const { dailyTotals } = require("../lib/stats.ts");
 const base = process.env.TEST_API_URL || "http://127.0.0.1:3000";
 const secret = "Password1!";
@@ -161,9 +165,21 @@ async function main() {
     method: "POST",
     body: {
       workout_name: "Unknown history",
-      items: [{ exercise_name: "Bench Press", weight: 300 }],
+      items: [{ exercise_name: "Bench Press", weight: 300, weight_unit: "kg" }],
     },
   });
+  // D1: a positive weight without a unit is rejected.
+  await expectStatus(
+    a.request("/workouts/", {
+      method: "POST",
+      body: {
+        workout_name: "Unitless",
+        items: [{ exercise_name: "Bench Press", weight: 300 }],
+      },
+    }),
+    400,
+  );
+  // Created with the deprecated unitless duration, as older clients did.
   const known = await a.request("/workouts/", {
     method: "POST",
     body: {
@@ -172,6 +188,20 @@ async function main() {
       occurred_at: "2026-09-21T00:00:00-05:00",
     },
   });
+  assert.equal(known.duration_minutes, null);
+  const minutes = await a.request(`/workouts/${known.id}`, {
+    method: "PUT",
+    body: workoutInput(
+      {
+        workout_name: "Boundary",
+        duration_minutes: "50",
+        occurred_at: known.occurred_at,
+      },
+      known,
+    ),
+  });
+  assert.equal(minutes.duration_minutes, 50);
+  assert.equal(minutes.duration, 45, "legacy duration survives new writes");
   await a.request("/workouts/", {
     method: "POST",
     body: {
@@ -193,33 +223,41 @@ async function main() {
   workout = await a.request(`/workouts/${workout.id}`, {
     method: "PUT",
     body: workoutInput(
-      { workout_name: "Renamed", duration: "30", occurred_at: "" },
+      { workout_name: "Renamed", duration_minutes: "30", occurred_at: "" },
       workout,
     ),
   });
   assert.equal(workout.occurred_at, null);
+  assert.equal(workout.duration_minutes, 30);
   assert.equal(workout.items.length, 1);
   assert.equal(
     await a.request(`/workouts/${workout.id}/items/${workout.items[0].id}`, {
       method: "PUT",
-      body: {
+      body: workoutItemInput({
         exercise_name: "Bench press",
-        sets: 3,
-        reps: 5,
-        weight: 280,
-        duration_minutes: 4.5,
-      },
+        sets: "3",
+        reps: "5",
+        weight: "280",
+        duration_minutes: "4.5",
+        weight_unit: "lb",
+      }),
     }),
     undefined,
   );
-  assert.equal((await a.request("/social/muscle-ranks"))[0].max_weight, 280);
+  // Records are kilograms whatever unit the lift was logged in.
+  const [record] = await a.request("/social/muscle-ranks");
+  assert.ok(Math.abs(record.max_weight - 280 * 0.45359237) < 1e-9);
+  assert.equal(
+    (await a.request(`/workouts/${workout.id}`)).items[0].weight_unit,
+    "lb",
+  );
   await a.request(`/workouts/${workout.id}/items/${workout.items[0].id}`, {
     method: "DELETE",
   });
   assert.deepEqual(await a.request("/social/muscle-ranks"), []);
   const child = await a.request(`/workouts/${workout.id}/items`, {
     method: "POST",
-    body: { exercise_name: "Bench press", weight: 300 },
+    body: { exercise_name: "Bench press", weight: 300, weight_unit: "kg" },
   });
   assert.ok(child.id);
   await expectStatus(
@@ -231,8 +269,13 @@ async function main() {
     body: {
       workout_name: "Nested",
       items: [
-        { id: child.id, exercise_name: "Bench press", weight: 300 },
-        { exercise_name: "Squat", weight: 200 },
+        {
+          id: child.id,
+          exercise_name: "Bench press",
+          weight: 300,
+          weight_unit: "kg",
+        },
+        { exercise_name: "Squat", weight: 200, weight_unit: "kg" },
       ],
     },
   });
@@ -248,7 +291,7 @@ async function main() {
     103,
   );
   console.log(
-    "PASS workout/item CRUD, unknown dates, inclusive/exclusive offset boundaries, nested IDs, record recalculation, >100 workouts",
+    "PASS workout/item CRUD, weight units and kg records, duration_minutes with legacy duration kept, unknown dates, inclusive/exclusive offset boundaries, nested IDs, record recalculation, >100 workouts",
   );
   let relation = await b.request("/social/friendships", {
     method: "POST",
@@ -288,7 +331,7 @@ async function main() {
       method: "POST",
       body: {
         workout_name: "Ranked",
-        items: [{ exercise_name: "bench PRESS", weight }],
+        items: [{ exercise_name: "bench PRESS", weight, weight_unit: "kg" }],
       },
     });
   const first = await a.request(

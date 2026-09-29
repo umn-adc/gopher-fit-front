@@ -18,7 +18,12 @@ export type ProfileDraft = {
   activity_level: string;
   goals: string;
   sports: string;
+  unit_preference: string;
 };
+const unitLabels = {
+  metric: "Metric (kg, cm)",
+  imperial: "Imperial (lb, ft/in)",
+} as const;
 export const emptyProfile: ProfileDraft = {
   name: "",
   age: "0",
@@ -28,6 +33,7 @@ export const emptyProfile: ProfileDraft = {
   activity_level: "",
   goals: "",
   sports: "",
+  unit_preference: "metric",
 };
 export function profileDraft(profile: Profile): ProfileDraft {
   return {
@@ -62,8 +68,9 @@ export function profileInput(
     activity_level,
     goals: list("goals"),
     sports: list("sports"),
-    // Not edited in this form; PUT replaces the whole profile, so keep saved values.
-    unit_preference: original?.unit_preference ?? "metric",
+    unit_preference:
+      draft.unit_preference === "imperial" ? "imperial" : "metric",
+    // Not edited in this form; PUT replaces the whole profile, so keep the saved value.
     weekly_workout_target: original?.weekly_workout_target ?? null,
   };
 }
@@ -114,6 +121,25 @@ export function ProfileFields({
         value={value.activity_level}
         onChange={(v) => set("activity_level", v)}
       />
+      <Choices
+        label="Display units"
+        options={Object.values(unitLabels)}
+        value={
+          unitLabels[
+            value.unit_preference === "imperial" ? "imperial" : "metric"
+          ]
+        }
+        onChange={(v) =>
+          set(
+            "unit_preference",
+            v === unitLabels.imperial ? "imperial" : "metric",
+          )
+        }
+      />
+      <Text>
+        New exercises default to this weight unit, and rankings use it. Profile
+        height and weight are still entered in cm and kg.
+      </Text>
       <Field
         label="Goals (one per line, optional)"
         multiline

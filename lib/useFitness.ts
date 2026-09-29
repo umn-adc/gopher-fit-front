@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import { allPages, api, errorMessage } from "./api";
-import type { Workout } from "./api-types";
+import type { Profile, Workout } from "./api-types";
 import { workoutSummary } from "./fitness";
 
 export function useWorkoutHistory(revision = 0) {
@@ -30,4 +30,26 @@ export function useWorkoutHistory(revision = 0) {
     summary: workouts ? workoutSummary(workouts) : null,
     error,
   };
+}
+
+// Reloaded on focus; the last profile stays visible while a reload is in flight.
+export function useProfile() {
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [error, setError] = useState("");
+  useFocusEffect(
+    useCallback(() => {
+      const controller = new AbortController();
+      setError("");
+      api
+        .request<Profile>("/profile/", { signal: controller.signal })
+        .then((value) => {
+          if (!controller.signal.aborted) setProfile(value);
+        })
+        .catch((e) => {
+          if (!controller.signal.aborted) setError(errorMessage(e));
+        });
+      return () => controller.abort();
+    }, []),
+  );
+  return { profile, error };
 }

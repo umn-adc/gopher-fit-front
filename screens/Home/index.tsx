@@ -19,7 +19,8 @@ import StreaksBlob from "../../assets/images/streaksBlob";
 import WorkoutsBlob from "../../assets/images/workoutsBlob";
 import { allPages, api, ApiError, errorMessage } from "../../lib/api";
 import type { Macros, Meal, Profile } from "../../lib/api-types";
-import { nutritionTotals } from "../../lib/fitness";
+import { nutritionTotals, workoutMinutes } from "../../lib/fitness";
+import { roundTenth } from "../../lib/units";
 import { useWorkoutHistory } from "../../lib/useFitness";
 import { localDate } from "../../lib/validation";
 import { useAuth } from "../../lib/auth";
@@ -233,11 +234,7 @@ export default function Home() {
                   <Text>{workout.workout_name}</Text>
                   <Text style={ui.muted}>
                     {(workout.items ?? []).length} exercises ·{" "}
-                    {(workout.items ?? []).reduce(
-                      (n, i) => n + i.duration_minutes,
-                      0,
-                    )}{" "}
-                    min logged
+                    {roundTenth(workoutMinutes(workout))} min logged
                   </Text>
                 </View>
               </Pressable>

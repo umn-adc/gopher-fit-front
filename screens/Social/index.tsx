@@ -3,7 +3,9 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Pressable } from "react-native";
 import { Avatar, Badge, EmptyState, Icon, ui } from "../../components/Design";
 import { palette } from "../../constants/Design";
-import { useWorkoutHistory } from "../../lib/useFitness";
+import { useProfile, useWorkoutHistory } from "../../lib/useFitness";
+import { workoutMinutes } from "../../lib/fitness";
+import { formatKilograms, roundTenth } from "../../lib/units";
 import {
   Action,
   Feedback,
@@ -41,6 +43,7 @@ export default function Social() {
     params.tab === "Rankings" || params.tab === "Friends" ? params.tab : "Feed";
   const [manage, setManage] = useState(false);
   const history = useWorkoutHistory();
+  const preference = useProfile().profile?.unit_preference;
   const [userId, setUserId] = useState("");
   const [found, setFound] = useState<PublicProfile | null>(null);
   const [relationship, setRelationship] = useState<Friendship | null>(null);
@@ -198,11 +201,7 @@ export default function Social() {
                   <Text>{workout.workout_name}</Text>
                   <Text style={ui.muted}>
                     {workout.items?.length ?? 0} exercises ·{" "}
-                    {(workout.items ?? []).reduce(
-                      (n, item) => n + item.duration_minutes,
-                      0,
-                    )}{" "}
-                    min logged
+                    {roundTenth(workoutMinutes(workout))} min logged
                   </Text>
                 </View>
               </View>
@@ -245,7 +244,10 @@ export default function Social() {
             </View>
             <View style={[ui.between, { marginTop: 24 }]}>
               {[
-                [mine?.max_weight ?? "—", "Best weight"],
+                [
+                  mine ? formatKilograms(mine.max_weight, preference) : "—",
+                  "Best weight",
+                ],
                 [mine?.percentile ?? "—", "Percentile"],
                 [history.summary?.streak ?? "—", "Day streak"],
               ].map(([value, label]) => (
@@ -270,7 +272,9 @@ export default function Social() {
               onPress={showLeaderboard}
             />
             <Text style={ui.muted}>
-              Compare lifts using the same weight units as your workouts.
+              Rankings compare lifts converted to kilograms and are shown in
+              your preferred unit. Lifts logged without a unit don&apos;t rank
+              until you edit them and choose kg or lb.
             </Text>
             <Feedback {...lookup} />
           </Section>
@@ -336,7 +340,9 @@ export default function Social() {
                 </Text>
                 <Text style={ui.muted}>{entry.percentile}th percentile</Text>
               </View>
-              <Text style={{ fontSize: 20 }}>{entry.max_weight}</Text>
+              <Text style={{ fontSize: 20 }}>
+                {formatKilograms(entry.max_weight, preference)}
+              </Text>
             </Pressable>
           ))}
           {query && (
@@ -350,7 +356,8 @@ export default function Social() {
               <View key={rank.exercise_key} style={ui.softRow}>
                 <Icon name="dumbbell" />
                 <Text style={{ flex: 1 }}>
-                  {rank.exercise_name} · Weight {rank.max_weight} · Rank{" "}
+                  {rank.exercise_name} ·{" "}
+                  {formatKilograms(rank.max_weight, preference)} · Rank{" "}
                   {rank.rank} · {rank.percentile}th percentile
                 </Text>
               </View>

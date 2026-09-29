@@ -171,6 +171,8 @@ async function main() {
         activity_level: "Moderately Active",
         sports: ["Hockey"],
         goals: ["Build Muscle"],
+        unit_preference: "metric",
+        weekly_workout_target: null,
       },
     );
     assert.deepEqual(errors, [], "No browser runtime errors");
