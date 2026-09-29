@@ -9,6 +9,39 @@ The frontend was checked against the current sibling backend at
 only temporary migrated SQLite databases and disposable accounts. The plan file
 is intentionally left untracked and uncommitted.
 
+## Next-steps frontend milestones (2026-09-29)
+
+Milestones 3a–3f (generated types, units, Home summary and weekly target, username
+search, favorite meals, persistent native login) were checked after each commit
+against the sibling backend's `ben/changes`. Final results on `88b6b33`:
+
+- `npm run typecheck` (includes the `check:api` staleness check): passed.
+- `npm test`: **33 passed** (unit tests for units, write payloads, weekly target
+  validation, favorites and the mocked secure credential store were added).
+- ESLint on changed app/lib/components/screens files: passed. Prettier: changed
+  files pass (the untouched `lib/recovery.ts` was already unformatted).
+- Web export and Android/iOS Hermes exports: passed. The web bundle contains no
+  secure-store code; the native bundles do.
+- `npm run test:integration` against a fresh `tests/serve_backend.py`: all five
+  sections passed, now covering weight units and kg records, `duration_minutes`
+  with legacy durations kept, the weekly target, date-filtered meals and daily
+  summaries, favorite meals, and username search with block exclusion.
+- `tests/browser.cjs`, `tests/design-browser.cjs` (TZ America/Chicago) and
+  `tests/onboarding-browser.cjs` against the rebuilt static preview: passed. New
+  browser steps cover the unit picker and kg rankings, Home reading one summary,
+  the over-target badge, weekly target validation and progress, debounced username
+  search, and saving/logging/editing/deleting favorites. Browser storage stays
+  empty (web login remains memory-only).
+
+Not run: native runtime on a device or emulator (see onboarding verification). The
+secure-store restore path is covered by unit tests with a mocked store, and
+bundling is covered by the native exports.
+
+On this WSL2 host the wall clock was measured stepping back 1.7 s within a minute.
+One integration run failed in the unchanged token-expiry step (expecting one
+refresh after 3.2 s and seeing none), consistent with that. Reruns on a fresh
+fixture passed.
+
 ## Generated API types (2026-09-29)
 
 The contract limitations listed under "Source inspection" below were fixed in the
