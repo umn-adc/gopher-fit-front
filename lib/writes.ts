@@ -1,5 +1,8 @@
 import type {
+  FavoriteMealInput,
+  LogFavoriteInput,
   MealInput,
+  MealItemInput,
   Workout,
   WorkoutInput,
   WorkoutItemInput,
@@ -66,5 +69,38 @@ export function workoutItemInput(draft: {
       false,
     ),
     weight_unit,
+  };
+}
+// Copies only the nutrition fields; IDs belong to the source meal.
+export function favoriteItems(
+  items: readonly MealItemInput[] | undefined,
+): MealItemInput[] {
+  return (items ?? []).map(({ name, calories, protein, carbs, fat }) => ({
+    name,
+    calories,
+    protein,
+    carbs,
+    fat,
+  }));
+}
+export function favoriteInput(
+  draft: { name: string; meal_type: string },
+  items?: readonly MealItemInput[],
+): FavoriteMealInput {
+  return {
+    name: name(draft.name, "Favorite name"),
+    meal_type: name(draft.meal_type, "Meal type"),
+    ...(items === undefined ? {} : { items: favoriteItems(items) }),
+  };
+}
+export function logFavoriteInput(draft: {
+  date: string;
+  time: string;
+  meal_type: string;
+}): LogFavoriteInput {
+  return {
+    date: dateValue(draft.date),
+    time: timeValue(draft.time),
+    meal_type: name(draft.meal_type, "Meal type"),
   };
 }

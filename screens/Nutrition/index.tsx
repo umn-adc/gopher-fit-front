@@ -10,9 +10,11 @@ import {
   styles,
 } from "../../components/Form";
 import { ListStatus } from "../../components/ListStatus";
+import { ui } from "../../components/Design";
 import { Text, View } from "../../components/Themed";
 import { api, ApiError, errorMessage } from "../../lib/api";
 import type {
+  FavoriteMeal,
   MacroInput,
   Macros,
   Meal,
@@ -21,10 +23,11 @@ import type {
 } from "../../lib/api-types";
 import { usePagedList, useTask } from "../../lib/hooks";
 import { localDate, name, numberValue } from "../../lib/validation";
-import { mealInput } from "../../lib/writes";
+import { favoriteInput, logFavoriteInput, mealInput } from "../../lib/writes";
 const newMeal = () => ({ date: localDate(), meal_type: "", time: "" });
 export default function Nutrition() {
   const list = usePagedList<Meal>("/nutrition/meals");
+  const favorites = usePagedList<FavoriteMeal>("/nutrition/favorites");
   const [editing, setEditing] = useState<Meal | "new" | null>(null);
   const [draft, setDraft] = useState(newMeal);
   const task = useTask();
@@ -46,6 +49,23 @@ export default function Nutrition() {
       colors={["#268bff", "#00b6d5"]}
     >
       <MacroGoals />
+      <Section title="Favorite meals">
+        <Text style={ui.muted}>
+          Save a meal you eat often, then log it again on any day.
+        </Text>
+        {favorites.items.map((favorite) => (
+          <FavoriteCard
+            key={favorite.id}
+            favorite={favorite}
+            refresh={favorites.reload}
+            onLogged={list.reload}
+          />
+        ))}
+        <ListStatus
+          list={favorites}
+          empty="No favorites yet. Use Save as favorite on a meal with food items."
+        />
+      </Section>
       <Section title="Meals">
         <View style={styles.row}>
           <Action
@@ -112,6 +132,7 @@ export default function Nutrition() {
             meal={meal}
             onEdit={() => edit(meal)}
             refresh={list.reload}
+            onFavorited={favorites.reload}
           />
         ))}
         <ListStatus
@@ -133,14 +154,17 @@ function MealCard({
   meal,
   onEdit,
   refresh,
+  onFavorited,
 }: {
   meal: Meal;
   onEdit: () => void;
   refresh: () => Promise<void>;
+  onFavorited: () => Promise<void>;
 }) {
   const [editing, setEditing] = useState<MealItem | "new" | null>(null);
   const [draft, setDraft] = useState(emptyItem);
   const [deleting, setDeleting] = useState(false);
+  const [favoriteName, setFavoriteName] = useState<string | null>(null);
   const task = useTask();
   function edit(item: MealItem | "new") {
     setEditing(item);
@@ -176,12 +200,50 @@ function MealCard({
           onPress={() => edit("new")}
         />
         <Action
+          title="Save as favorite"
+          secondary
+          disabled={task.saving || !meal.items?.length}
+          onPress={() => setFavoriteName(meal.meal_type)}
+        />
+        <Action
           title="Delete meal"
           secondary
           disabled={task.saving}
           onPress={() => setDeleting(true)}
         />
       </View>
+      {favoriteName !== null && (
+        <>
+          <Field
+            label="Favorite name"
+            value={favoriteName}
+            onChangeText={setFavoriteName}
+          />
+          <Action
+            title={task.saving ? "Saving favorite…" : "Save favorite"}
+            disabled={task.saving}
+            onPress={() =>
+              void task.run(async () => {
+                await api.request<FavoriteMeal>("/nutrition/favorites", {
+                  method: "POST",
+                  body: favoriteInput(
+                    { name: favoriteName, meal_type: meal.meal_type },
+                    meal.items,
+                  ),
+                });
+                setFavoriteName(null);
+                await onFavorited();
+              }, "Saved as a favorite.")
+            }
+          />
+          <Action
+            title="Cancel favorite"
+            secondary
+            disabled={task.saving}
+            onPress={() => setFavoriteName(null)}
+          />
+        </>
+      )}
       {deleting && (
         <>
           <Text>Delete this meal and all its food items?</Text>
@@ -277,6 +339,183 @@ function MealCard({
           />
         </Section>
       )}
+    </Section>
+  );
+}
+function FavoriteCard({
+  favorite,
+  refresh,
+  onLogged,
+}: {
+  favorite: FavoriteMeal;
+  refresh: () => Promise<void>;
+  onLogged: () => Promise<void>;
+}) {
+  const [mode, setMode] = useState<"log" | "edit" | "delete" | null>(null);
+  const [logDraft, setLogDraft] = useState({
+    date: "",
+    time: "",
+    meal_type: "",
+  });
+  const [editDraft, setEditDraft] = useState({
+    name: favorite.name,
+    meal_type: favorite.meal_type,
+    items: favorite.items,
+  });
+  const task = useTask();
+  const path = `/nutrition/favorites/${favorite.id}`;
+  function open(next: typeof mode) {
+    setMode(mode === next ? null : next);
+    setLogDraft({ date: localDate(), time: "", meal_type: favorite.meal_type });
+    setEditDraft({
+      name: favorite.name,
+      meal_type: favorite.meal_type,
+      items: favorite.items,
+    });
+    task.setError("");
+    task.setMessage("");
+  }
+  return (
+    <Section title={favorite.name}>
+      <Text>
+        {favorite.meal_type} · {favorite.total_calories} kcal
+      </Text>
+      <Text style={ui.muted}>
+        {favorite.items.length
+          ? favorite.items.map((item) => item.name).join(", ")
+          : "No food items."}
+      </Text>
+      <View style={styles.row}>
+        <Action
+          title="Log favorite"
+          accessibilityLabel={`Log ${favorite.name}`}
+          disabled={task.saving}
+          onPress={() => open("log")}
+        />
+        <Action
+          title="Edit favorite"
+          accessibilityLabel={`Edit favorite ${favorite.name}`}
+          secondary
+          disabled={task.saving}
+          onPress={() => open("edit")}
+        />
+        <Action
+          title="Delete favorite"
+          accessibilityLabel={`Delete favorite ${favorite.name}`}
+          secondary
+          disabled={task.saving}
+          onPress={() => open("delete")}
+        />
+      </View>
+      {mode === "log" && (
+        <>
+          <Field
+            label="Log date (YYYY-MM-DD)"
+            value={logDraft.date}
+            onChangeText={(date) => setLogDraft({ ...logDraft, date })}
+          />
+          <Field
+            label="Local time (optional HH:MM)"
+            value={logDraft.time}
+            onChangeText={(time) => setLogDraft({ ...logDraft, time })}
+          />
+          <Field
+            label="Meal type"
+            value={logDraft.meal_type}
+            onChangeText={(meal_type) =>
+              setLogDraft({ ...logDraft, meal_type })
+            }
+          />
+          <Action
+            title={task.saving ? "Logging…" : "Log meal"}
+            disabled={task.saving}
+            onPress={() =>
+              void task.run(async () => {
+                const body = logFavoriteInput(logDraft);
+                await api.request<Meal>(path + "/log", {
+                  method: "POST",
+                  body,
+                });
+                setMode(null);
+                await onLogged();
+              }, `Logged ${favorite.name} for ${logDraft.date}.`)
+            }
+          />
+        </>
+      )}
+      {mode === "edit" && (
+        <>
+          <Field
+            label="Favorite name"
+            value={editDraft.name}
+            onChangeText={(name) => setEditDraft({ ...editDraft, name })}
+          />
+          <Field
+            label="Meal type"
+            value={editDraft.meal_type}
+            onChangeText={(meal_type) =>
+              setEditDraft({ ...editDraft, meal_type })
+            }
+          />
+          {editDraft.items.map((item) => (
+            <View key={item.id} style={ui.between}>
+              <Text style={{ flex: 1 }}>
+                {item.name} · {item.calories} kcal
+              </Text>
+              <Action
+                title="Remove"
+                accessibilityLabel={`Remove ${item.name} from favorite`}
+                compact
+                secondary
+                disabled={task.saving}
+                onPress={() =>
+                  setEditDraft({
+                    ...editDraft,
+                    items: editDraft.items.filter((kept) => kept !== item),
+                  })
+                }
+              />
+            </View>
+          ))}
+          <Action
+            title={task.saving ? "Saving favorite…" : "Save favorite"}
+            disabled={task.saving}
+            onPress={() =>
+              void task.run(async () => {
+                await api.request<FavoriteMeal>(path, {
+                  method: "PUT",
+                  body: favoriteInput(editDraft, editDraft.items),
+                });
+                setMode(null);
+                await refresh();
+              }, "Favorite saved.")
+            }
+          />
+        </>
+      )}
+      {mode === "delete" && (
+        <>
+          <Text>
+            Delete this favorite? Meals already logged from it are kept.
+          </Text>
+          <Action
+            title="Confirm favorite deletion"
+            disabled={task.saving}
+            onPress={() =>
+              void task.run(async () => {
+                await api.request<void>(path, { method: "DELETE" });
+                await refresh();
+              })
+            }
+          />
+          <Action
+            title="Keep favorite"
+            secondary
+            onPress={() => setMode(null)}
+          />
+        </>
+      )}
+      <Feedback {...task} />
     </Section>
   );
 }

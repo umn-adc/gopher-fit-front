@@ -38,6 +38,10 @@ export type MealInput = Required<
 >;
 export type Meal = Schema<"MealResponse">;
 export type NutritionSummary = Schema<"NutritionSummaryResponse">;
+// PUT keeps a favorite's items when `items` is omitted; a list replaces them all.
+export type FavoriteMealInput = Schema<"FavoriteMealRequest">;
+export type FavoriteMeal = Schema<"FavoriteMealResponse">;
+export type LogFavoriteInput = Required<Schema<"LogFavoriteRequest">>;
 export type MacroInput = Required<Schema<"MacroGoalsRequest">>;
 export type Macros = Schema<"MacroGoalsResponse">;
 // Every field is sent; weight_unit is required whenever weight is positive.

@@ -55,7 +55,10 @@ UTF-8 limit; ordinary login does not impose new-password complexity.
 
 Meal dates are local `YYYY-MM-DD` strings. Home reads today's totals and macro
 targets from one `/nutrition/summary?date=` request using the device's local date,
-and shows "Goal met! N over" once calories exceed a nonzero target. Weeks run from local Monday 00:00 inclusive to the next
+and shows "Goal met! N over" once calories exceed a nonzero target. Favorite meals
+are templates saved from a meal's food items; logging one copies its items into a
+new meal on the chosen date, and editing or deleting a favorite never changes meals
+already logged. Weeks run from local Monday 00:00 inclusive to the next
 Monday 00:00 exclusive, including DST changes. Workout timestamps require `T`
 and an offset; unknown historical dates remain unknown and are excluded from
 weekly counts. Screens refresh on focus. Offset pagination cannot provide a

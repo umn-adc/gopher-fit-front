@@ -2,6 +2,8 @@ require("./register-typescript.cjs");
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const {
+  favoriteInput,
+  logFavoriteInput,
   mealInput,
   workoutInput,
   workoutItemInput,
@@ -104,6 +106,50 @@ test("workout items send a weight unit whenever the weight is positive", () => {
   const cardio = workoutItemInput({ ...item, weight: "0", weight_unit: "" });
   assert.equal(cardio.weight_unit, null);
   assert.equal(workoutItemInput({ ...item, weight: "0" }).weight_unit, "lb");
+});
+test("favorites copy only nutrition fields and logging validates the day", () => {
+  const items = [
+    {
+      id: 4,
+      meal_id: 9,
+      name: "Rice",
+      calories: 200,
+      protein: 4,
+      carbs: 45,
+      fat: 1,
+    },
+  ];
+  assert.deepEqual(
+    favoriteInput({ name: "Usual", meal_type: "Lunch" }, items),
+    {
+      name: "Usual",
+      meal_type: "Lunch",
+      items: [{ name: "Rice", calories: 200, protein: 4, carbs: 45, fat: 1 }],
+    },
+  );
+  // Omitting items on an edit keeps the favorite's stored items.
+  assert.deepEqual(favoriteInput({ name: "Renamed", meal_type: "Brunch" }), {
+    name: "Renamed",
+    meal_type: "Brunch",
+  });
+  assert.deepEqual(
+    favoriteInput({ name: "Empty", meal_type: "Snack" }, []).items,
+    [],
+  );
+  assert.throws(
+    () => favoriteInput({ name: " ", meal_type: "Lunch" }),
+    /Favorite name/,
+  );
+  assert.deepEqual(
+    logFavoriteInput({ date: "2026-09-29", time: "", meal_type: "Lunch" }),
+    { date: "2026-09-29", time: "", meal_type: "Lunch" },
+  );
+  assert.throws(() =>
+    logFavoriteInput({ date: "2026-02-30", time: "", meal_type: "Lunch" }),
+  );
+  assert.throws(() =>
+    logFavoriteInput({ date: "2026-09-29", time: "25:00", meal_type: "Lunch" }),
+  );
 });
 test("weekly workout targets are blank or 1-14 whole workouts", () => {
   assert.equal(weeklyTarget(""), null);

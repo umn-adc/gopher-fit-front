@@ -242,8 +242,70 @@ async function main() {
     await clickRequest(p, "Save targets", "/nutrition/macros", "PUT");
     await tab(p, "Home");
     await visible(p, "Goal met! 100 over");
+    // Favorites: save the meal, log it to another day, edit, then delete.
+    await tab(p, "Nutrition");
+    await button(p, "Save as favorite").click();
+    await field(p, "Favorite name", "Browser favorite");
+    const favorite = await clickRequest(
+      p,
+      "Save favorite",
+      "/nutrition/favorites",
+      "POST",
+      201,
+    );
+    assert.deepEqual(
+      favorite.items.map((i) => [i.name, i.calories]),
+      [["Beans", 300]],
+    );
+    await button(p, "Log Browser favorite").click();
+    await field(p, "Log date (YYYY-MM-DD)", "2026-01-15");
+    const logged = await clickRequest(
+      p,
+      "Log meal",
+      `/nutrition/favorites/${favorite.id}/log`,
+      "POST",
+      201,
+    );
+    assert.equal(logged.date, "2026-01-15");
+    await visible(p, "Logged Browser favorite for 2026-01-15.");
+    await visible(p, "Edited lunch · 2026-01-15");
+    await button(p, "Edit favorite Browser favorite").click();
+    await field(p, "Favorite name", "Renamed favorite");
+    await button(p, "Remove Beans from favorite").click();
+    const renamed = await clickRequest(
+      p,
+      "Save favorite",
+      `/nutrition/favorites/${favorite.id}`,
+      "PUT",
+    );
+    assert.equal(renamed.name, "Renamed favorite");
+    assert.deepEqual(renamed.items, []);
+    await button(p, "Delete favorite Renamed favorite").click();
+    await clickRequest(
+      p,
+      "Confirm favorite deletion",
+      `/nutrition/favorites/${favorite.id}`,
+      "DELETE",
+      204,
+    );
+    await visible(
+      p,
+      "No favorites yet. Use Save as favorite on a meal with food items.",
+    );
+    // The logged copy is independent; remove it so later steps see one meal.
+    await p
+      .getByRole("button", { name: "Delete meal", exact: true })
+      .nth(1)
+      .click();
+    await clickRequest(
+      p,
+      "Confirm meal deletion",
+      `/nutrition/meals/${logged.id}`,
+      "DELETE",
+      204,
+    );
     console.log(
-      "PASS browser macro targets, meal/item create/edit, 204 refetch, Home daily summary and over-target badge",
+      "PASS browser macro targets, meal/item create/edit, 204 refetch, Home daily summary and over-target badge, favorite save/log/edit/delete",
     );
     await tab(p, "Workouts");
     await button(p, "Add workout").click();

@@ -2,6 +2,8 @@ require("./register-typescript.cjs");
 const assert = require("node:assert/strict");
 const { createApiClient, allPages, ApiError } = require("../lib/api.ts");
 const {
+  favoriteInput,
+  logFavoriteInput,
   mealInput,
   workoutInput,
   workoutItemInput,
@@ -146,6 +148,56 @@ async function main() {
   });
   meal = await a.request(`/nutrition/meals/${meal.id}`);
   assert.equal(meal.items.length, 2);
+  // Favorites: save this meal as a template, log it on another day, edit, delete.
+  const favorite = await a.request("/nutrition/favorites", {
+    method: "POST",
+    body: favoriteInput(
+      { name: "Usual lunch", meal_type: "Lunch" },
+      meal.items,
+    ),
+  });
+  assert.equal(favorite.items.length, meal.items.length);
+  assert.equal(favorite.total_calories, meal.total_calories);
+  const loggedMeal = await a.request(
+    `/nutrition/favorites/${favorite.id}/log`,
+    {
+      method: "POST",
+      body: logFavoriteInput({
+        date: "2026-09-20",
+        time: "",
+        meal_type: "Lunch",
+      }),
+    },
+  );
+  assert.equal(loggedMeal.date, "2026-09-20");
+  assert.equal(
+    (await a.request("/nutrition/summary?date=2026-09-20")).calories,
+    meal.total_calories,
+  );
+  await expectStatus(b.request(`/nutrition/favorites/${favorite.id}`), 404);
+  await expectStatus(
+    b.request(`/nutrition/favorites/${favorite.id}/log`, {
+      method: "POST",
+      body: { date: "2026-09-20" },
+    }),
+    404,
+  );
+  const edited = await a.request(`/nutrition/favorites/${favorite.id}`, {
+    method: "PUT",
+    body: favoriteInput(
+      { name: "Light lunch", meal_type: "Lunch" },
+      favorite.items.slice(1),
+    ),
+  });
+  assert.equal(edited.items.length, favorite.items.length - 1);
+  await a.request(`/nutrition/favorites/${favorite.id}`, { method: "DELETE" });
+  assert.deepEqual(await a.request("/nutrition/favorites"), []);
+  assert.equal(
+    (await a.request(`/nutrition/meals/${loggedMeal.id}`)).total_calories,
+    meal.total_calories,
+    "deleting a favorite keeps meals logged from it",
+  );
+  await a.request(`/nutrition/meals/${loggedMeal.id}`, { method: "DELETE" });
   for (let i = 1; i < 200; i++)
     await a.request("/nutrition/meals", {
       method: "POST",
@@ -192,7 +244,7 @@ async function main() {
   );
   await a.request(`/nutrition/meals/${meal.id}`, { method: "DELETE" });
   console.log(
-    "PASS profile and weekly target, nutrition CRUD, ownership, full replacement, 200-record pagination, date filter and daily summary, totals, zero/missing targets",
+    "PASS profile and weekly target, nutrition CRUD, favorite meals, ownership, full replacement, 200-record pagination, date filter and daily summary, totals, zero/missing targets",
   );
   let workout = await a.request("/workouts/", {
     method: "POST",
