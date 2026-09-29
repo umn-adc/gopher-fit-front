@@ -1,91 +1,57 @@
-export type AuthResponse = {
-  token: string;
-  refresh_token: string;
-  expires_in: number;
-  user_id: number;
-  username: string;
-  token_type: string;
-};
-export const genders = ["Male", "Female", "Other"] as const;
+// Shapes come from the backend OpenAPI document (lib/api-schema.ts, `npm run gen:api`).
+import type { components } from "./api-schema";
+
+type Schema<Name extends keyof components["schemas"]> =
+  components["schemas"][Name];
+
+export type AuthResponse = Schema<"AuthResponse">;
+export type Gender = Schema<"ProfileRequest">["gender"];
+export type ActivityLevel = Schema<"ProfileRequest">["activity_level"];
+export const genders = [
+  "Male",
+  "Female",
+  "Other",
+] as const satisfies readonly Gender[];
 export const activities = [
   "Sedentary",
   "Lightly Active",
   "Moderately Active",
   "Very Active",
   "Extra Active",
-] as const;
-export type ProfileInput = {
-  name: string;
-  age: number;
-  height: number;
-  weight: number;
-  gender: string;
-  activity_level: string;
-  goals: string[] | null;
-  sports: string[] | null;
-};
-export type Profile = ProfileInput & { user_id: number };
-export type PublicProfile = { user_id: number; username: string };
-export type RegisterInput = ProfileInput & {
-  username: string;
-  password: string;
-};
-export type MealItemInput = {
-  name: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-};
-export type MealItem = MealItemInput & { id: number; meal_id: number };
-export type MealInput = { date: string; meal_type: string; time: string };
-export type Meal = MealInput & {
-  id: number;
-  user_id: number;
-  total_calories: number;
-  items?: MealItem[];
-};
-export type MacroInput = {
-  calories_target: number;
-  protein_target: number;
-  carbs_target: number;
-  fat_target: number;
-};
-export type Macros = MacroInput & { user_id: number };
-export type WorkoutItemInput = {
-  exercise_name: string;
-  sets: number;
-  reps: number;
-  weight: number;
-  duration_minutes: number;
-};
-export type WorkoutItem = WorkoutItemInput & { id: number; workout_id: number };
-export type WorkoutInput = {
-  workout_name: string;
-  duration: number;
-  occurred_at?: string | null;
-};
-export type Workout = WorkoutInput & {
-  id: number;
-  user_id: number;
-  items?: WorkoutItem[];
-};
+] as const satisfies readonly ActivityLevel[];
+export const isGender = (value: string): value is Gender =>
+  genders.some((gender) => gender === value);
+export const isActivityLevel = (value: string): value is ActivityLevel =>
+  activities.some((activity) => activity === value);
+// Profile PUT is a full replacement, so every field is always sent.
+export type ProfileInput = Required<Schema<"ProfileRequest">>;
+// Stored gender/activity are plain strings: rows from the Go era may hold "".
+export type Profile = Schema<"ProfileResponse">;
+export type PublicProfile = Schema<"PublicProfileResponse">;
+export type RegisterInput = ProfileInput &
+  Pick<Schema<"RegisterRequest">, "username" | "password">;
+export type MealItemInput = Required<Schema<"MealItemRequest">>;
+export type MealItem = Schema<"MealItemResponse">;
+// Parent edits never send items; dedicated item routes preserve siblings.
+export type MealInput = Required<
+  Pick<Schema<"MealRequest">, "date" | "meal_type" | "time">
+>;
+export type Meal = Schema<"MealResponse">;
+export type MacroInput = Required<Schema<"MacroGoalsRequest">>;
+export type Macros = Schema<"MacroGoalsResponse">;
+export type WorkoutItemInput = Schema<"WorkoutItemRequest">;
+export type WorkoutItem = Schema<"WorkoutItemResponse">;
+export type WorkoutInput = Omit<Schema<"WorkoutRequest">, "items">;
+export type Workout = Schema<"WorkoutResponse">;
+// The database CHECK constraint limits status to these values; the schema says string.
 export type FriendshipStatus = "pending" | "accepted" | "blocked";
-export type FriendshipInput = {
+export type FriendshipInput = Omit<Schema<"FriendshipRequest">, "status"> & {
   user1_id: number;
   user2_id: number;
   status: FriendshipStatus;
 };
-export type Friendship = FriendshipInput & { action_user_id: number };
-export type LeaderboardEntry = {
-  user_id: number;
-  username: string;
-  max_weight: number;
-  rank: number;
-  percentile: number;
+export type Friendship = Omit<Schema<"FriendshipResponse">, "status"> & {
+  status: FriendshipStatus;
 };
-export type MuscleRank = Omit<LeaderboardEntry, "username"> & {
-  exercise_key: string;
-  exercise_name: string;
-  source_workout_item_id: number;
-};
+export type LeaderboardEntry = Schema<"LeaderboardResponse">;
+export type MuscleRank = Schema<"MuscleRankResponse">;

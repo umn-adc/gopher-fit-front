@@ -107,6 +107,13 @@ for local testing, not a production HTTPS server.
 
 ## Checks and disposable integration tests
 
+`lib/api-schema.ts` is generated from the backend's checked-in OpenAPI snapshot
+(`../gopher-fit-back/docs/openapi.json`) and `lib/api-types.ts` derives the app's
+request/response types from it. `npm run typecheck` first fails if the generated
+file is stale, so it needs the backend checkout next to this one. After a backend
+contract change, run `npm run gen:api` and fix whatever `tsc` reports. Don't edit
+the generated file by hand.
+
 ```sh
 npm run typecheck
 npm test
@@ -155,7 +162,8 @@ checks, see [onboarding verification](docs/onboarding-verification.md).
 
 ## Finding the code
 
-- `lib/api.ts`, `api-types.ts`, `auth.tsx`: HTTP contract, errors, in-memory sessions.
+- `lib/api.ts`, `auth.tsx`: HTTP client, errors, in-memory sessions.
+- `lib/api-schema.ts` (generated), `api-types.ts`: the API contract as TS types.
 - `lib/hooks.ts`: submit lock and the repeated paginated-list behavior.
 - `lib/writes.ts`, `validation.ts`, `stats.ts`: safe parent payloads, inputs, totals.
 - `screens/`: each tab's forms and lists, login, onboarding, and recovery.

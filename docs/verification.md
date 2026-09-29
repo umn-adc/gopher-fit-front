@@ -9,6 +9,24 @@ The frontend was checked against the current sibling backend at
 only temporary migrated SQLite databases and disposable accounts. The plan file
 is intentionally left untracked and uncommitted.
 
+## Generated API types (2026-09-29)
+
+The contract limitations listed under "Source inspection" below were fixed in the
+backend's OpenAPI document: gender/activity are required enums, each operation lists
+its real error statuses, and meal/workout responses have typed schemas.
+`lib/api-schema.ts` is generated from that document with `openapi-typescript`
+(`npm run gen:api`), and `npm run typecheck` fails when it is stale. Deriving
+`lib/api-types.ts` from it found two real mismatches, both fixed:
+
+- The profile editor sent `gender`/`activity_level` as unchecked strings; it now
+  narrows them with type guards before building the request.
+- The profile editor omitted `unit_preference` and `weekly_workout_target`. Profile
+  PUT is a full replacement, so saving would have reset them; it now carries the
+  saved values forward.
+
+Inline request bodies for meal items, macros, workout items and friendships are
+annotated with the derived input types so `tsc` checks them.
+
 ## Source inspection
 
 Read both working trees and the backend API/deployment guides, OpenAPI snapshot,

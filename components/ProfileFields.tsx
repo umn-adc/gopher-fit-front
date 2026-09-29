@@ -1,4 +1,11 @@
-import { activities, genders, ProfileInput } from "../lib/api-types";
+import {
+  activities,
+  genders,
+  isActivityLevel,
+  isGender,
+  type Profile,
+  type ProfileInput,
+} from "../lib/api-types";
 import { name, numberValue } from "../lib/validation";
 import { Choices, Field } from "./Form";
 import { Text } from "./Themed";
@@ -22,7 +29,7 @@ export const emptyProfile: ProfileDraft = {
   goals: "",
   sports: "",
 };
-export function profileDraft(profile: ProfileInput): ProfileDraft {
+export function profileDraft(profile: Profile): ProfileDraft {
   return {
     ...profile,
     age: String(profile.age),
@@ -34,12 +41,10 @@ export function profileDraft(profile: ProfileInput): ProfileDraft {
 }
 export function profileInput(
   draft: ProfileDraft,
-  original?: ProfileInput,
+  original?: Profile,
 ): ProfileInput {
-  if (
-    !genders.some((g) => g === draft.gender) ||
-    !activities.some((a) => a === draft.activity_level)
-  )
+  const { gender, activity_level } = draft;
+  if (!isGender(gender) || !isActivityLevel(activity_level))
     throw new Error("Choose a gender and activity level.");
   const list = (key: "goals" | "sports") =>
     original && draft[key] === (original[key] ?? []).join("\n")
@@ -53,10 +58,13 @@ export function profileInput(
     age: numberValue(draft.age, "Age", true, 130),
     height: numberValue(draft.height, "Height", true, 300),
     weight: numberValue(draft.weight, "Weight", true, 700),
-    gender: draft.gender,
-    activity_level: draft.activity_level,
+    gender,
+    activity_level,
     goals: list("goals"),
     sports: list("sports"),
+    // Not edited in this form; PUT replaces the whole profile, so keep saved values.
+    unit_preference: original?.unit_preference ?? "metric",
+    weekly_workout_target: original?.weekly_workout_target ?? null,
   };
 }
 export function ProfileFields({

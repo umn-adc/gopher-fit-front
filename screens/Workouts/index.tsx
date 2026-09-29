@@ -20,7 +20,11 @@ import {
 import { ListStatus } from "../../components/ListStatus";
 import { Text, View } from "../../components/Themed";
 import { api } from "../../lib/api";
-import type { Workout, WorkoutItem } from "../../lib/api-types";
+import type {
+  Workout,
+  WorkoutItem,
+  WorkoutItemInput,
+} from "../../lib/api-types";
 import { usePagedList, useTask } from "../../lib/hooks";
 import { name, numberValue } from "../../lib/validation";
 import { workoutInput } from "../../lib/writes";
@@ -481,7 +485,7 @@ function WorkoutCard({
               disabled={task.saving}
               onPress={() =>
                 void task.run(async () => {
-                  const body = {
+                  const body: WorkoutItemInput = {
                     exercise_name: name(draft.exercise_name, "Exercise name"),
                     sets: numberValue(draft.sets, "Sets"),
                     reps: numberValue(draft.reps, "Reps"),

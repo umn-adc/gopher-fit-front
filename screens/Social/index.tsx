@@ -17,6 +17,7 @@ import { Text, View } from "../../components/Themed";
 import { api, ApiError } from "../../lib/api";
 import type {
   Friendship,
+  FriendshipInput,
   FriendshipStatus,
   LeaderboardEntry,
   MuscleRank,
@@ -87,7 +88,7 @@ export default function Social() {
                     user1_id: session.user_id,
                     user2_id: otherId,
                     status,
-                  },
+                  } satisfies FriendshipInput,
                 }),
           },
         );

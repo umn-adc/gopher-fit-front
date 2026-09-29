@@ -12,7 +12,13 @@ import {
 import { ListStatus } from "../../components/ListStatus";
 import { Text, View } from "../../components/Themed";
 import { api, ApiError, errorMessage } from "../../lib/api";
-import type { Macros, Meal, MealItem } from "../../lib/api-types";
+import type {
+  MacroInput,
+  Macros,
+  Meal,
+  MealItem,
+  MealItemInput,
+} from "../../lib/api-types";
 import { usePagedList, useTask } from "../../lib/hooks";
 import { localDate, name, numberValue } from "../../lib/validation";
 import { mealInput } from "../../lib/writes";
@@ -247,7 +253,7 @@ function MealCard({
             disabled={task.saving}
             onPress={() =>
               void task.run(async () => {
-                const body = {
+                const body: MealItemInput = {
                   name: name(draft.name, "Food name"),
                   calories: numberValue(draft.calories, "Calories"),
                   protein: numberValue(draft.protein, "Protein"),
@@ -358,7 +364,7 @@ function MacroGoals() {
             disabled={task.saving}
             onPress={() =>
               void task.run(async () => {
-                const body = {
+                const body: MacroInput = {
                   calories_target: numberValue(
                     draft.calories_target,
                     "Calories target",
